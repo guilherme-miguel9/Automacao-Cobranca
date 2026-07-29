@@ -1,0 +1,14 @@
+{
+  "name": "whatsapp-local-gateway",
+  "version": "1.0.0",
+  "description": "Gateway Local Gratuito de WhatsApp para Automação",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.12",
+    "express": "^4.19.2",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
