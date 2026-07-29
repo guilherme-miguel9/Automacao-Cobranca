@@ -20,17 +20,16 @@ class Pendencia:
     @property
     def foto_url_direta(self) -> str:
         """
-        Converte URLs de visualização do Google Drive para links diretos de download de imagem.
+        Converte URLs de visualização do Google Drive para links diretos de download (suporta imagens, PDFs, documentos).
         """
         if not self.foto_url:
             return ""
         url = str(self.foto_url).strip()
         import re
-        # Extrair ID do Google Drive (file/d/ID ou id=ID)
         drive_match = re.search(r"(?:file/d/|id=)([\w-]+)", url)
         if drive_match and "drive.google.com" in url:
             file_id = drive_match.group(1)
-            return f"https://lh3.googleusercontent.com/d/{file_id}"
+            return f"https://drive.google.com/uc?export=download&id={file_id}"
         return url
 
     @property

@@ -65,12 +65,40 @@ app.post('/api/v1/send-message', async (req, res) => {
         const jid = `${cleanNumber}@s.whatsapp.net`;
 
         if (media_url) {
-            // Envio de mídia/imagem/anexo
-            await sock.sendMessage(jid, {
-                image: { url: media_url },
-                caption: message
-            });
-            console.log(`📸 Imagem e Mensagem enviadas com sucesso para ${cleanNumber}`);
+            const urlLower = media_url.toLowerCase();
+            const isImage = (urlLower.includes('.png') || urlLower.includes('.jpg') || urlLower.includes('.jpeg') || urlLower.includes('.webp')) && !urlLower.includes('.pdf');
+            const isVideo = urlLower.includes('.mp4') || urlLower.includes('.mov');
+            const isAudio = urlLower.includes('.mp3') || urlLower.includes('.ogg') || urlLower.includes('.wav');
+
+            if (isImage) {
+                await sock.sendMessage(jid, {
+                    image: { url: media_url },
+                    caption: message
+                });
+                console.log(`📸 Imagem enviada com sucesso para ${cleanNumber}`);
+            } else if (isVideo) {
+                await sock.sendMessage(jid, {
+                    video: { url: media_url },
+                    caption: message
+                });
+                console.log(`🎥 Vídeo enviado com sucesso para ${cleanNumber}`);
+            } else if (isAudio) {
+                await sock.sendMessage(jid, { text: message });
+                await sock.sendMessage(jid, {
+                    audio: { url: media_url },
+                    mimetype: 'audio/mp4'
+                });
+                console.log(`🎵 Áudio enviado com sucesso para ${cleanNumber}`);
+            } else {
+                // PDF / Documento / Google Drive Anexo
+                await sock.sendMessage(jid, { text: message });
+                await sock.sendMessage(jid, {
+                    document: { url: media_url },
+                    mimetype: 'application/pdf',
+                    fileName: 'Anexo_Pendencia.pdf'
+                });
+                console.log(`📄 Documento PDF enviado com sucesso para ${cleanNumber}`);
+            }
         } else {
             // Envio apenas de texto
             await sock.sendMessage(jid, { text: message });
