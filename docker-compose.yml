@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  cobranca-bot:
+    build: .
+    container_name: cobranca_automacao_bot
+    environment:
+      - DRY_RUN=True
+      - GSHEET_SPREADSHEET_NAME=Base_Pendencias
+      - WHATSAPP_API_URL=http://localhost:8000/api/v1/send-message
+    volumes:
+      - ./config:/app/config
+      - ./data/output:/app/data/output
+    restart: "no"
