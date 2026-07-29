@@ -29,12 +29,14 @@ class Settings:
     GOOGLE_CREDENTIALS_FILE: Path = BASE_DIR / os.getenv("GOOGLE_CREDENTIALS_FILE", "config/google_credentials.json")
     GSHEET_SPREADSHEET_NAME: str = os.getenv("GSHEET_SPREADSHEET_NAME", "Base_Pendencias")
 
-    # Diretórios de Dados
+    BASE_DIR: Path = BASE_DIR
     INPUT_DIR: Path = BASE_DIR / "data" / "input"
     OUTPUT_DIR: Path = BASE_DIR / "data" / "output"
+    TEMP_DIR: Path = BASE_DIR / "data" / "temp_anexos"
 
 # Garantir existência dos diretórios de dados
 Settings.INPUT_DIR.mkdir(parents=True, exist_ok=True)
 Settings.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+Settings.TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
 settings = Settings()

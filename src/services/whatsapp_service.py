@@ -23,7 +23,7 @@ def baixar_anexo_drive(url_ou_id: str) -> str:
 
     file_id = drive_match.group(1)
     creds_path = settings.GOOGLE_CREDENTIALS_FILE
-    temp_dir = settings.BASE_DIR / "data" / "temp_anexos"
+    temp_dir = settings.TEMP_DIR
     temp_dir.mkdir(parents=True, exist_ok=True)
     local_filepath = temp_dir / f"anexo_{file_id}.pdf"
 
