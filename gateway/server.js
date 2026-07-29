@@ -71,41 +71,45 @@ app.post('/api/v1/send-message', async (req, res) => {
                 fileBuffer = fs.readFileSync(media_url);
             }
 
-            const urlLower = media_url.toLowerCase();
-            const isImage = (urlLower.includes('.png') || urlLower.includes('.jpg') || urlLower.includes('.jpeg') || urlLower.includes('.webp')) && !urlLower.includes('.pdf');
-            const isVideo = urlLower.includes('.mp4') || urlLower.includes('.mov');
-            const isAudio = urlLower.includes('.mp3') || urlLower.includes('.ogg') || urlLower.includes('.wav');
+            let isImage = false;
+            let mimetype = 'application/pdf';
+            let fileName = 'Anexo_Pendencia.pdf';
+
+            if (fileBuffer && fileBuffer.length > 4) {
+                const headerHex = fileBuffer.slice(0, 4).toString('hex');
+                const headerStr = fileBuffer.slice(0, 4).toString('ascii');
+
+                if (headerStr === '%PDF') {
+                    isImage = false;
+                    mimetype = 'application/pdf';
+                    fileName = 'Documento_Pendencia.pdf';
+                } else if (headerHex.startsWith('ffd8') || headerHex === '89504e47' || headerStr.startsWith('RIFF')) {
+                    isImage = true;
+                    mimetype = headerHex.startsWith('ffd8') ? 'image/jpeg' : 'image/png';
+                }
+            } else {
+                const urlLower = media_url.toLowerCase();
+                isImage = (urlLower.includes('.png') || urlLower.includes('.jpg') || urlLower.includes('.jpeg') || urlLower.includes('.webp')) && !urlLower.includes('.pdf');
+            }
 
             const mediaSource = fileBuffer ? fileBuffer : { url: media_url };
 
             if (isImage) {
+                // Fotos e Imagens aceitam mensagem como legenda na mesma mensagem
                 await sock.sendMessage(jid, {
                     image: mediaSource,
                     caption: message
                 });
-                console.log(`📸 Imagem enviada com sucesso para ${cleanNumber}`);
-            } else if (isVideo) {
-                await sock.sendMessage(jid, {
-                    video: mediaSource,
-                    caption: message
-                });
-                console.log(`🎥 Vídeo enviado com sucesso para ${cleanNumber}`);
-            } else if (isAudio) {
-                await sock.sendMessage(jid, { text: message });
-                await sock.sendMessage(jid, {
-                    audio: mediaSource,
-                    mimetype: 'audio/mp4'
-                });
-                console.log(`🎵 Áudio enviado com sucesso para ${cleanNumber}`);
+                console.log(`📸 Imagem enviada com legenda para ${cleanNumber}`);
             } else {
-                // PDF / Documento / Google Drive Anexo
+                // PDFs e Documentos: Envia o texto primeiro e o documento em seguida
                 await sock.sendMessage(jid, { text: message });
                 await sock.sendMessage(jid, {
                     document: mediaSource,
-                    mimetype: 'application/pdf',
-                    fileName: 'Anexo_Pendencia.pdf'
+                    mimetype: mimetype,
+                    fileName: fileName
                 });
-                console.log(`📄 Documento PDF enviado com sucesso para ${cleanNumber}`);
+                console.log(`📄 Texto e Documento PDF entregues com sucesso para ${cleanNumber}`);
             }
         } else {
             // Envio apenas de texto
