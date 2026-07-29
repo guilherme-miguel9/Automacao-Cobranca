@@ -12,9 +12,26 @@ class Pendencia:
     email: Optional[str] = None         # E-mail do Solicitante (opcional)
     valor: float = 0.0                  # Valor da pendência (opcional)
     rota_codigo: str = "ROTA_PADRAO"    # Código da Rota / Setor
+    hora_limite: Optional[str] = ""     # Hora Limite (ex: 17:00)
     codigo_barras: Optional[str] = ""   # Código de Barras / Chave PIX (opcional)
     status: str = "PENDENTE"            # Status: PENDENTE, ENVIADO, FALHA
     detalhes_envio: Optional[str] = ""   # Log de envio
+
+    @property
+    def foto_url_direta(self) -> str:
+        """
+        Converte URLs de visualização do Google Drive para links diretos de download de imagem.
+        """
+        if not self.foto_url:
+            return ""
+        url = str(self.foto_url).strip()
+        import re
+        # Extrair ID do Google Drive (file/d/ID ou id=ID)
+        drive_match = re.search(r"(?:file/d/|id=)([\w-]+)", url)
+        if drive_match and "drive.google.com" in url:
+            file_id = drive_match.group(1)
+            return f"https://lh3.googleusercontent.com/d/{file_id}"
+        return url
 
     @property
     def uc(self) -> str:
@@ -34,8 +51,7 @@ class Pendencia:
 
     def data_maxima_expirada(self) -> bool:
         """
-        Verifica se a data/hora atual ultrapassou a Data Máxima configurada.
-        Suporta formatos: 'DD/MM/YYYY', 'DD/MM/YYYY HH:MM', 'YYYY-MM-DD', 'YYYY-MM-DD HH:MM'.
+        Verifica se a data/hora atual ultrapassou a Data Máxima / Hora Limite configurada.
         """
         if not self.data_maxima:
             return False
@@ -43,12 +59,16 @@ class Pendencia:
         try:
             from datetime import datetime
             dt_str = str(self.data_maxima).strip()
-            dt_max = None
             
+            # Se hora_limite existir e não estiver na data_maxima, concatenar
+            if self.hora_limite and ":" in str(self.hora_limite) and len(dt_str) <= 10:
+                dt_str = f"{dt_str} {str(self.hora_limite).strip()}"
+
+            dt_max = None
             for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S", "%d/%m/%Y", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
                 try:
                     dt = datetime.strptime(dt_str, fmt)
-                    if fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                    if fmt in ("%d/%m/%Y", "%Y-%m-%d") and not self.hora_limite:
                         dt = dt.replace(hour=23, minute=59, second=59)
                     dt_max = dt
                     break

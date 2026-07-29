@@ -31,12 +31,15 @@ class WhatsAppService:
             pendencia_id=pendencia.pendencia_id,
             descricao=pendencia.descricao,
             data_maxima=pendencia.data_maxima,
+            hora_limite=pendencia.hora_limite,
             valor=pendencia.valor,
             codigo_barras=pendencia.codigo_barras
         )
 
+        midia_anexo = pendencia.foto_url_direta
+
         if self.dry_run:
-            info_foto = f"\n[Foto Anexa]: {pendencia.foto_url}" if pendencia.foto_url else ""
+            info_foto = f"\n[Anexo]: {midia_anexo}" if midia_anexo else ""
             logger.info(f"[SIMULAÇÃO DRY_RUN] WhatsApp para {telefone_dest} (ID: {pendencia.pendencia_id}):\n---\n{mensagem}{info_foto}\n---")
             pendencia.status = "ENVIADO (SIMULAÇÃO)"
             pendencia.detalhes_envio = "Simulação concluída com sucesso (DRY_RUN=True)"
@@ -49,8 +52,8 @@ class WhatsAppService:
                 "message": mensagem,
                 "token": self.api_token
             }
-            if pendencia.foto_url:
-                payload["media_url"] = pendencia.foto_url
+            if midia_anexo:
+                payload["media_url"] = midia_anexo
 
             response = requests.post(self.api_url, json=payload, timeout=10)
             

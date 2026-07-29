@@ -25,7 +25,7 @@ def formatar_telefone(telefone: str) -> str:
         
     return apenas_numeros
 
-def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descricao: str, data_maxima: str, valor: float = 0.0, codigo_barras: str = "") -> str:
+def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descricao: str, data_maxima: str, hora_limite: str = "", valor: float = 0.0, codigo_barras: str = "") -> str:
     """
     Gera a mensagem padronizada do WhatsApp para aviso de pendência.
     """
@@ -35,8 +35,11 @@ def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descri
         f"Notificação referente à pendência *{pendencia_id}*.\n\n"
         f"📌 *Detalhes da Pendência:*\n"
         f"• *Descrição:* {descricao}\n"
-        f"• *Data Máxima:* {data_maxima}\n"
+        f"• *Prazo Máximo:* {data_maxima}\n"
     )
+    
+    if hora_limite:
+        msg += f"• *Hora Limite:* {hora_limite}\n"
     
     if valor and valor > 0:
         msg += f"• *Valor:* {formatar_moeda(valor)}\n"
