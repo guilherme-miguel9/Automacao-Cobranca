@@ -9,8 +9,8 @@ from config.settings import settings
 
 def baixar_anexo_drive(url_ou_id: str) -> str:
     """
-    Baixa o arquivo do Google Drive (PDF/imagem) usando a Conta de Serviço (google_credentials.json).
-    Assim funciona mesmo se o link estiver privado, desde que a Conta de Serviço tenha acesso.
+    Baixa o arquivo do Google Drive (PDF/imagem) usando a Conta de Serviço (google_credentials.json)
+    ou URL direta de download público. Valida se o arquivo baixado é mídia válida e não um HTML de aviso.
     """
     if not url_ou_id:
         return ""
@@ -22,42 +22,77 @@ def baixar_anexo_drive(url_ou_id: str) -> str:
         return url_str
 
     file_id = drive_match.group(1)
-    creds_path = settings.GOOGLE_CREDENTIALS_FILE
     temp_dir = settings.TEMP_DIR
     temp_dir.mkdir(parents=True, exist_ok=True)
     local_filepath = temp_dir / f"anexo_{file_id}.pdf"
 
+    # Se o arquivo local já existe, verificar se é um arquivo de mídia válido (não HTML)
     if local_filepath.exists():
-        return str(local_filepath.resolve())
+        try:
+            with open(local_filepath, "rb") as f:
+                head = f.read(512)
+                if b"<!DOCTYPE" not in head and b"<html" not in head and len(head) > 50:
+                    return str(local_filepath.resolve())
+            os.remove(local_filepath)
+        except Exception:
+            pass
 
-    if not creds_path.exists():
-        return f"https://drive.google.com/uc?export=download&id={file_id}"
+    creds_path = settings.GOOGLE_CREDENTIALS_FILE
 
+    # 1. Tentar baixar via API do Google Drive autenticada (Conta de Serviço)
+    if creds_path.exists():
+        try:
+            from google.oauth2.service_account import Credentials
+            import google.auth.transport.requests
+
+            scopes = ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/drive"]
+            credentials = Credentials.from_service_account_file(str(creds_path), scopes=scopes)
+            auth_req = google.auth.transport.requests.Request()
+            credentials.refresh(auth_req)
+            
+            headers = {"Authorization": f"Bearer {credentials.token}"}
+            drive_api_url = f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media"
+
+            res = requests.get(drive_api_url, headers=headers, stream=True, timeout=30)
+            if res.status_code == 200:
+                with open(local_filepath, "wb") as f:
+                    for chunk in res.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                
+                # Validar se o conteúdo não é HTML
+                with open(local_filepath, "rb") as f:
+                    head = f.read(512)
+                    if b"<!DOCTYPE" not in head and b"<html" not in head:
+                        logger.info(f"📥 Anexo do Google Drive baixado com sucesso via Conta de Serviço: {local_filepath.name}")
+                        return str(local_filepath.resolve())
+                os.remove(local_filepath)
+        except Exception as e:
+            logger.warning(f"Tentativa de download via API do Drive falhou: {e}")
+
+    # 2. Tentar download via URL pública direta com confirmação
     try:
-        from google.oauth2.service_account import Credentials
-        import google.auth.transport.requests
+        session = requests.Session()
+        download_url = f"https://drive.usercontent.google.com/download?id={file_id}&export=download&confirm=t"
+        res = session.get(download_url, stream=True, timeout=30)
 
-        scopes = ["https://www.googleapis.com/auth/drive.readonly"]
-        credentials = Credentials.from_service_account_file(str(creds_path), scopes=scopes)
-        auth_req = google.auth.transport.requests.Request()
-        credentials.refresh(auth_req)
-        
-        headers = {"Authorization": f"Bearer {credentials.token}"}
-        drive_api_url = f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media"
-
-        res = requests.get(drive_api_url, headers=headers, stream=True, timeout=30)
         if res.status_code == 200:
             with open(local_filepath, "wb") as f:
                 for chunk in res.iter_content(chunk_size=8192):
                     f.write(chunk)
-            logger.info(f"📥 Anexo do Google Drive baixado com sucesso via Conta de Serviço: {local_filepath.name}")
-            return str(local_filepath.resolve())
-        else:
-            logger.warning(f"Baixando via URL direta fallback para {file_id} (HTTP {res.status_code})")
-            return f"https://drive.google.com/uc?export=download&id={file_id}"
+
+            # Validar se não baixou página HTML de erro/login
+            with open(local_filepath, "rb") as f:
+                head = f.read(512)
+                if b"<!DOCTYPE" not in head and b"<html" not in head and len(head) > 50:
+                    logger.info(f"📥 Anexo do Google Drive baixado via URL pública: {local_filepath.name}")
+                    return str(local_filepath.resolve())
+            
+            os.remove(local_filepath)
+            logger.warning(f"⚠️ O link do Google Drive ({file_id}) retornou uma página de acesso negado/HTML em vez do arquivo.")
     except Exception as e:
-        logger.warning(f"Erro ao baixar anexo do Google Drive via API: {e}")
-        return f"https://drive.google.com/uc?export=download&id={file_id}"
+        logger.warning(f"Erro ao baixar anexo público do Google Drive: {e}")
+
+    return ""
 
 class WhatsAppService:
     """
