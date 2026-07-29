@@ -45,17 +45,33 @@ class OpenClawOrchestrator:
             valor_sucesso_rota = 0.0
 
             # 1. Enviar notificações via WhatsApp cliente a cliente
+            import time
+            import random
+
             for pendencia in rota.pendencias:
                 total_processado += 1
                 valor_total_acumulado += pendencia.valor
 
-                # Verificar se o encarregado deu OK ou marcou como concluído
+                # Verificar se o encarregado deu OK ou marcou como concluído no Sheets
                 if pendencia.esta_concluido():
-                    logger.info(f"⏭️ Ignorando pendência {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Marcada como OK / Concluída no Sheets.")
+                    logger.info(f"⏭️ Ignorando pendência {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Marcada como OK no Sheets.")
                     pendencia.detalhes_envio = "Ignorado: Status OK no Sheets"
                     sucessos_rota += 1
                     total_sucesso += 1
                     continue
+
+                # Verificar se a Data/Hora Máxima foi ultrapassada
+                if pendencia.data_maxima_expirada():
+                    logger.info(f"⏳ Ignorando pendência {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Data Máxima ({pendencia.data_maxima}) ultrapassada.")
+                    pendencia.detalhes_envio = f"Ignorado: Data Máxima Expirada ({pendencia.data_maxima})"
+                    falhas_rota += 1
+                    total_falha += 1
+                    continue
+
+                # Variação de tempo aleatória entre envios (Antispam WhatsApp: 3 a 8 segundos)
+                delay_antispam = random.uniform(3.0, 8.0)
+                logger.info(f"⏱️ Variação antispam: aguardando {delay_antispam:.1f}s antes de notificar {pendencia.nome_solicitante}...")
+                time.sleep(delay_antispam)
 
                 sucesso = self.whatsapp_service.enviar_cobranca(pendencia)
                 if sucesso:
