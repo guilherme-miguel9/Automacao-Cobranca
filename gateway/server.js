@@ -2,6 +2,7 @@ const express = require('express');
 const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.use(express.json());
@@ -65,27 +66,34 @@ app.post('/api/v1/send-message', async (req, res) => {
         const jid = `${cleanNumber}@s.whatsapp.net`;
 
         if (media_url) {
+            let fileBuffer = null;
+            if (fs.existsSync(media_url)) {
+                fileBuffer = fs.readFileSync(media_url);
+            }
+
             const urlLower = media_url.toLowerCase();
             const isImage = (urlLower.includes('.png') || urlLower.includes('.jpg') || urlLower.includes('.jpeg') || urlLower.includes('.webp')) && !urlLower.includes('.pdf');
             const isVideo = urlLower.includes('.mp4') || urlLower.includes('.mov');
             const isAudio = urlLower.includes('.mp3') || urlLower.includes('.ogg') || urlLower.includes('.wav');
 
+            const mediaSource = fileBuffer ? fileBuffer : { url: media_url };
+
             if (isImage) {
                 await sock.sendMessage(jid, {
-                    image: { url: media_url },
+                    image: mediaSource,
                     caption: message
                 });
                 console.log(`📸 Imagem enviada com sucesso para ${cleanNumber}`);
             } else if (isVideo) {
                 await sock.sendMessage(jid, {
-                    video: { url: media_url },
+                    video: mediaSource,
                     caption: message
                 });
                 console.log(`🎥 Vídeo enviado com sucesso para ${cleanNumber}`);
             } else if (isAudio) {
                 await sock.sendMessage(jid, { text: message });
                 await sock.sendMessage(jid, {
-                    audio: { url: media_url },
+                    audio: mediaSource,
                     mimetype: 'audio/mp4'
                 });
                 console.log(`🎵 Áudio enviado com sucesso para ${cleanNumber}`);
@@ -93,7 +101,7 @@ app.post('/api/v1/send-message', async (req, res) => {
                 // PDF / Documento / Google Drive Anexo
                 await sock.sendMessage(jid, { text: message });
                 await sock.sendMessage(jid, {
-                    document: { url: media_url },
+                    document: mediaSource,
                     mimetype: 'application/pdf',
                     fileName: 'Anexo_Pendencia.pdf'
                 });

@@ -25,6 +25,8 @@ data/input/*
 !data/input/.gitkeep
 data/output/*
 !data/output/.gitkeep
+data/temp_anexos/*
+!data/temp_anexos/.gitkeep
 scratch/
 
 # Python Cache & Bytecode
