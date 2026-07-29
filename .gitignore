@@ -1,0 +1,41 @@
+# ==========================================
+# Automação de Cobranças - Git Ignore Policy
+# ==========================================
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Chaves, credenciais e variáveis de ambiente sensíveis
+.env*
+config/.env*
+config/*.json
+gateway/node_modules/
+gateway/auth_info_baileys/
+
+# Relatórios, Logs e Dados Locais (Nenhum CSV/Excel/Log sobe para o Git)
+*.log
+*.csv
+*.xlsx
+data/input/*
+!data/input/.gitkeep
+data/output/*
+!data/output/.gitkeep
+scratch/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# IDE e Sistemas Operacionais
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
