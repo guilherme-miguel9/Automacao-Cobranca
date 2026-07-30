@@ -17,6 +17,16 @@ config/*.json
 gateway/node_modules/
 gateway/auth_info_baileys/
 
+# Builds, Executáveis (.exe) e Relatórios de Compilação
+dist/
+build/
+*.dist/
+*.build/
+*.exe
+*.spec
+*.xml
+nuitka-crash-report.xml
+
 # Relatórios, Logs e Dados Locais (Nenhum CSV/Excel/Log sobe para o Git)
 *.log
 *.csv
