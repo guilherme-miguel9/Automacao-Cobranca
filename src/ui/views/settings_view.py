@@ -22,27 +22,19 @@ class SettingsView(QWidget):
         card.setObjectName("glassCard")
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(28, 28, 28, 28)
-        card_layout.setSpacing(18)
+        card_layout.setSpacing(22)
 
         # Title
-        title = QLabel("Configurações do Sistema e Arquivo .env")
+        title = QLabel("Configuracoes de Armazenamento e Execucao")
         title.setObjectName("sectionTitle")
         card_layout.addWidget(title)
 
-        desc = QLabel("Altere a planilha do Google Sheets, modo de teste e diretório dos relatórios de auditoria.")
+        desc = QLabel("Defina a pasta local onde os relatorios consolidado de cobranca em CSV serao salvos.")
         desc.setObjectName("subText")
         card_layout.addWidget(desc)
 
-        # 1. Google Sheet URL / Name
-        lbl_sheet = QLabel("Link ou Nome da Planilha no Google Sheets:")
-        self.input_sheet = QLineEdit()
-        self.input_sheet.setText(settings.GSHEET_SPREADSHEET_NAME)
-        self.input_sheet.setPlaceholderText("https://docs.google.com/spreadsheets/d/...")
-        card_layout.addWidget(lbl_sheet)
-        card_layout.addWidget(self.input_sheet)
-
-        # 2. Output Report Directory Selector
-        lbl_output = QLabel("Local de Armazenamento dos Relatorios em CSV:")
+        # 1. Output Report Directory Selector
+        lbl_output = QLabel("Local de Armazenamento dos Relatorios (CSV):")
         out_layout = QHBoxLayout()
         self.input_output_dir = QLineEdit()
         self.input_output_dir.setText(str(settings.OUTPUT_DIR.resolve()))
@@ -54,26 +46,11 @@ class SettingsView(QWidget):
         card_layout.addWidget(lbl_output)
         card_layout.addLayout(out_layout)
 
-        # 3. WhatsApp Gateway API URL
-        lbl_gw = QLabel("URL do Gateway Local do WhatsApp:")
-        self.input_gw_url = QLineEdit()
-        self.input_gw_url.setText(settings.WHATSAPP_API_URL)
-        card_layout.addWidget(lbl_gw)
-        card_layout.addWidget(self.input_gw_url)
-
-        # 4. Dry Run Mode
+        # 2. Dry Run Mode
         self.chk_dry_run = QCheckBox("Modo Simulacao (DRY_RUN - Nao dispara WhatsApp real)")
         self.chk_dry_run.setChecked(settings.DRY_RUN)
         self.chk_dry_run.setStyleSheet("font-size: 13px; font-weight: 600; color: #F8FAFC;")
         card_layout.addWidget(self.chk_dry_run)
-
-        # 5. Locked Google Credentials (NOT editable as requested by user)
-        lbl_creds = QLabel("Credenciais Google Cloud (google_credentials.json) [Embutido no Projeto - Leitura Automatizada]:")
-        self.input_creds = QLineEdit()
-        self.input_creds.setText(str(settings.GOOGLE_CREDENTIALS_FILE))
-        self.input_creds.setReadOnly(True)
-        card_layout.addWidget(lbl_creds)
-        card_layout.addWidget(self.input_creds)
 
         # Save Button
         btn_save = QPushButton("Salvar Alteracoes no .env")
@@ -82,25 +59,25 @@ class SettingsView(QWidget):
         card_layout.addWidget(btn_save, alignment=Qt.AlignRight)
 
         layout.addWidget(card)
+        layout.addStretch()
 
     def browse_output_dir(self):
-        folder = QFileDialog.getExistingDirectory(self, "Selecione o diretório para relatórios em CSV", str(settings.OUTPUT_DIR))
+        folder = QFileDialog.getExistingDirectory(self, "Selecione a pasta para relatorios em CSV", str(settings.OUTPUT_DIR))
         if folder:
             self.input_output_dir.setText(folder)
 
     def save_settings(self):
         try:
             env_file = settings.BASE_DIR / "config" / ".env"
-            sheet_val = self.input_sheet.text().strip()
             out_val = self.input_output_dir.text().strip()
-            gw_val = self.input_gw_url.text().strip()
             dry_val = "True" if self.chk_dry_run.isChecked() else "False"
 
-            # Atualizar arquivo .env
+            # Preservar chaves padrão fixas do sistema no .env
             lines = [
-                f"GSHEET_SPREADSHEET_NAME={sheet_val}\n",
+                f"GSHEET_SPREADSHEET_NAME={settings.GSHEET_SPREADSHEET_NAME}\n",
+                f"GOOGLE_CREDENTIALS_FILE=config/google_credentials.json\n",
+                f"WHATSAPP_API_URL={settings.WHATSAPP_API_URL}\n",
                 f"DRY_RUN={dry_val}\n",
-                f"WHATSAPP_API_URL={gw_val}\n",
                 f"OUTPUT_DIR={out_val}\n"
             ]
 
@@ -108,9 +85,7 @@ class SettingsView(QWidget):
                 f.writelines(lines)
 
             # Atualizar memória do settings
-            settings.GSHEET_SPREADSHEET_NAME = sheet_val
             settings.DRY_RUN = (dry_val == "True")
-            settings.WHATSAPP_API_URL = gw_val
             settings.OUTPUT_DIR = Path(out_val)
             settings.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
