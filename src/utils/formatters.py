@@ -12,12 +12,19 @@ def formatar_moeda(valor: float) -> str:
 def formatar_telefone(telefone: str) -> str:
     """
     Formatador de números de telefone para o padrão WhatsApp internacional (+55...).
+    Permite Links de Grupo (chat.whatsapp.com) ou IDs Diretos (@g.us)
     """
     if not telefone:
         return ""
     
+    tel_str = str(telefone).strip()
+    
+    # Se for um grupo ou link de convite, mantém o texto original
+    if "chat.whatsapp.com" in tel_str or "@g.us" in tel_str:
+        return tel_str
+        
     # Remover caracteres não numéricos
-    apenas_numeros = re.sub(r"\D", "", str(telefone))
+    apenas_numeros = re.sub(r"\D", "", tel_str)
     
     # Adicionar DDI 55 caso não tenha
     if len(apenas_numeros) in (10, 11) and not apenas_numeros.startswith("55"):

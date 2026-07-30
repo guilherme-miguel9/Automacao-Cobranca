@@ -80,9 +80,26 @@ app.post('/api/v1/send-message', async (req, res) => {
             return res.status(400).json({ error: 'Parâmetros "number" e "message" são obrigatórios.' });
         }
 
-        // Formatar número para o padrão Baileys (ex: 55859999887766@s.whatsapp.net)
-        const cleanNumber = number.replace(/\D/g, '');
-        const jid = `${cleanNumber}@s.whatsapp.net`;
+        let jid = '';
+        if (number.includes('chat.whatsapp.com/')) {
+            // É um link de convite para grupo
+            const codeParts = number.split('chat.whatsapp.com/');
+            const code = codeParts[1].split('/')[0].split('?')[0];
+            try {
+                jid = await sock.groupAcceptInvite(code);
+                console.log(`✅ Entrou no grupo via link: ${jid}`);
+            } catch (err) {
+                console.error('❌ Falha ao entrar no grupo via link:', err);
+                return res.status(400).json({ error: 'Falha ao entrar no grupo via link de convite. Verifique se o link é válido e não foi revogado.' });
+            }
+        } else if (number.includes('@g.us')) {
+            // É um ID de grupo direto
+            jid = number;
+        } else {
+            // Formatar número para o padrão Baileys de usuário individual (ex: 55859999887766@s.whatsapp.net)
+            const cleanNumber = number.replace(/\D/g, '');
+            jid = `${cleanNumber}@s.whatsapp.net`;
+        }
 
         if (media_url) {
             let fileBuffer = null;
@@ -129,7 +146,7 @@ app.post('/api/v1/send-message', async (req, res) => {
                     image: mediaSource,
                     caption: message
                 });
-                console.log(`📸 Imagem enviada com legenda para ${cleanNumber}`);
+                console.log(`📸 Imagem enviada com legenda para ${jid}`);
             } else {
                 // PDFs, Excel, Documentos genéricos: Envia em uma única bolha com legenda!
                 await sock.sendMessage(jid, {
@@ -138,12 +155,12 @@ app.post('/api/v1/send-message', async (req, res) => {
                     fileName: fileName,
                     caption: message // Legenda junto ao documento
                 });
-                console.log(`📄 Documento (${fileName}) enviado com legenda para ${cleanNumber}`);
+                console.log(`📄 Documento (${fileName}) enviado com legenda para ${jid}`);
             }
         } else {
             // Envio apenas de texto
             await sock.sendMessage(jid, { text: message });
-            console.log(`💬 Mensagem enviada com sucesso para ${cleanNumber}`);
+            console.log(`💬 Mensagem enviada com sucesso para ${jid}`);
         }
 
         return res.status(200).json({ status: 'success', message: 'Mensagem enviada com sucesso!' });
