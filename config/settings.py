@@ -1,17 +1,25 @@
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-import sys
 if getattr(sys, 'frozen', False):
     BASE_DIR = Path(sys.executable).resolve().parent
 else:
     BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Carregar arquivo .env se existir
+# Garantir existência do diretório config local ao lado do executável/projeto
+(BASE_DIR / "config").mkdir(parents=True, exist_ok=True)
+
+# Carregar arquivo .env (prioriza o .env local da pasta do app, fallback para o embutido)
 env_path = BASE_DIR / "config" / ".env"
+if not env_path.exists() and getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    bundled_env = Path(sys._MEIPASS) / "config" / ".env"
+    if bundled_env.exists():
+        env_path = bundled_env
+
 if env_path.exists():
-    load_dotenv(env_path)
+    load_dotenv(env_path, override=True)
 
 class Settings:
     # Modo Simulação (Dry Run)

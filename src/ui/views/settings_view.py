@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QPushButton, QCheckBox, QFrame, QFileDialog, QMessageBox
@@ -29,7 +30,7 @@ class SettingsView(QWidget):
         title.setObjectName("sectionTitle")
         card_layout.addWidget(title)
 
-        desc = QLabel("Defina a pasta local onde os relatorios consolidado de cobranca em CSV serao salvos.")
+        desc = QLabel("Defina a pasta local onde os relatorios consolidado de cobranca em CSV serao salvos e ajuste o modo de execucao.")
         desc.setObjectName("subText")
         card_layout.addWidget(desc)
 
@@ -68,7 +69,11 @@ class SettingsView(QWidget):
 
     def save_settings(self):
         try:
-            env_file = settings.BASE_DIR / "config" / ".env"
+            # Garantir existência da pasta config local no ambiente do executável
+            env_dir = settings.BASE_DIR / "config"
+            env_dir.mkdir(parents=True, exist_ok=True)
+            env_file = env_dir / ".env"
+
             out_val = self.input_output_dir.text().strip()
             dry_val = "True" if self.chk_dry_run.isChecked() else "False"
 
@@ -84,11 +89,14 @@ class SettingsView(QWidget):
             with open(env_file, "w", encoding="utf-8") as f:
                 f.writelines(lines)
 
-            # Atualizar memória do settings
+            # Recarregar variáveis de ambiente em tempo de execução
+            load_dotenv(env_file, override=True)
+
+            # Atualizar memória do objeto settings
             settings.DRY_RUN = (dry_val == "True")
             settings.OUTPUT_DIR = Path(out_val)
             settings.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-            QMessageBox.information(self, "Sucesso", "Configurações salvas com sucesso no arquivo .env!")
+            QMessageBox.information(self, "Sucesso", f"Configurações salvas com sucesso no arquivo .env!\n\nModo DRY_RUN: {settings.DRY_RUN}")
         except Exception as e:
             QMessageBox.critical(self, "Erro ao Salvar", f"Não foi possível salvar o arquivo .env: {e}")
