@@ -4,6 +4,9 @@ const qrcode = require('qrcode-terminal');
 const path = require('path');
 const fs = require('fs');
 
+process.on('uncaughtException', (err) => console.error('Caught exception:', err));
+process.on('unhandledRejection', (reason, promise) => console.error('Unhandled Rejection at:', promise, 'reason:', reason));
+
 const app = express();
 app.use(express.json());
 
