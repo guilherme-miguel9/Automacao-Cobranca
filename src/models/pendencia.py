@@ -61,7 +61,11 @@ class Pendencia:
     def data_maxima_expirada(self) -> bool:
         """
         Verifica se a data/hora atual ultrapassou a Data Máxima / Hora Limite configurada.
+        Se existir uma mensagem programada manualmente, ignora a data máxima.
         """
+        if self.mensagem_programada and str(self.mensagem_programada).strip():
+            return False
+
         if not self.data_maxima:
             return False
 
