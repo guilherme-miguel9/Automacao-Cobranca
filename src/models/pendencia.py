@@ -158,7 +158,16 @@ class Pendencia:
             return False
 
         try:
-            # Tentar formatos com Hora e Minuto
+            # 1. Tentar formatos Apenas com Hora (ex: 14:30 ou 14:30:00)
+            for fmt in ("%H:%M", "%H:%M:%S"):
+                try:
+                    dt_prog = datetime.strptime(dt_str, fmt)
+                    # Assumimos que é para o dia de hoje
+                    return agora.time() >= dt_prog.time()
+                except ValueError:
+                    continue
+
+            # 2. Tentar formatos com Data e Hora
             for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"):
                 try:
                     dt_prog = datetime.strptime(dt_str, fmt)
@@ -167,7 +176,7 @@ class Pendencia:
                 except ValueError:
                     continue
             
-            # Tentar formatos somente com Data
+            # 3. Tentar formatos somente com Data
             for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
                 try:
                     dt_prog = datetime.strptime(dt_str, fmt).date()
