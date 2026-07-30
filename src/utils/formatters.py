@@ -46,16 +46,26 @@ def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descri
     Gera a mensagem padronizada do WhatsApp para aviso de pendência.
     """
     data_exibicao = formatar_data_limpa(data_maxima)
+    is_agendado_sem_data = bool(mensagem_programada and not data_maxima)
+    
     msg = (
         f"Olá, *{nome_solicitante}*!\n"
         f"Sou o assistente virtual do Núcleo de Qualidade.\n\n"
-        f"Notificação referente à pendência *{pendencia_id}*.\n\n"
-        f"*Detalhes da Pendência:*\n"
-        f"• *Descrição:* {descricao}\n"
     )
     
-    is_agendado_sem_data = bool(mensagem_programada and not data_maxima)
-
+    if is_agendado_sem_data:
+        msg += (
+            f"Notificação referente a: *{pendencia_id}*.\n\n"
+            f"*Detalhes:*\n"
+        )
+    else:
+        msg += (
+            f"Notificação referente à pendência *{pendencia_id}*.\n\n"
+            f"*Detalhes da Pendência:*\n"
+        )
+        
+    msg += f"• *Descrição:* {descricao}\n"
+    
     if not is_agendado_sem_data:
         msg += f"• *Prazo Máximo:* {data_exibicao}\n"
         if hora_limite:
@@ -67,16 +77,10 @@ def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descri
     if codigo_barras:
         msg += f"\n*Código de Barras / Chave PIX:*\n`{codigo_barras}`\n"
         
-    if is_agendado_sem_data:
-        msg += (
-            "\nResponder a esta mensagem em caso de dúvidas.\n\n"
-        )
-    else:
-        msg += (
-            "\nFavor verificar o andamento ou responder a esta mensagem em caso de dúvidas.\n\n"
-        )
-        
-    msg += "Atenciosamente,\n*Equipe do Núcleo de Qualidade*"
+    if not is_agendado_sem_data:
+        msg += "\nFavor verificar o andamento ou responder a esta mensagem em caso de dúvidas.\n"
+
+    msg += "\nAtenciosamente,\n*Equipe do Núcleo de Qualidade*"
     
     return msg
 
