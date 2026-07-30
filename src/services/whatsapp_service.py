@@ -39,20 +39,46 @@ def baixar_anexo_drive(url_ou_id: str, pendencia_id: str = "GENERICO") -> str:
         
     local_filepath = temp_dir / f"PENDENCIA_{pendencia_id}{ext}"
 
-    # Se o arquivo local já existe, verificar se é um arquivo de mídia válido (não HTML)
-    if local_filepath.exists():
+    def check_and_rename_file(file_path: Path) -> str:
         try:
-            with open(local_filepath, "rb") as f:
+            with open(file_path, "rb") as f:
                 head = f.read(512)
-                if b"<!DOCTYPE" not in head and b"<html" not in head and len(head) > 50:
-                    return str(local_filepath.resolve())
+                if b"<!DOCTYPE" in head or b"<html" in head:
+                    return ""
+                
+                # Checar Magic Headers para definir a extensão real se não for xlsx/docx
+                if head.startswith(b'%PDF'):
+                    new_ext = ".pdf"
+                elif head.startswith(b'\xFF\xD8'):
+                    new_ext = ".jpg"
+                elif head.startswith(b'\x89PNG'):
+                    new_ext = ".png"
+                else:
+                    new_ext = file_path.suffix # Mantém a que já estava (ex: .xlsx)
+                
+            if new_ext != file_path.suffix:
+                new_path = file_path.with_suffix(new_ext)
+                if new_path.exists():
+                    os.remove(new_path)
+                os.rename(file_path, new_path)
+                return str(new_path.resolve())
+            return str(file_path.resolve())
+        except Exception:
+            return ""
+
+    # Se o arquivo local já existe, verificar
+    if local_filepath.exists():
+        valid_path = check_and_rename_file(local_filepath)
+        if valid_path:
+            return valid_path
+        try:
             os.remove(local_filepath)
         except Exception:
             pass
 
     creds_path = settings.GOOGLE_CREDENTIALS_FILE
 
-    # 1. Tentar baixar via API do Google Drive autenticada (Conta de Serviço) SOMENTE se for um ID nativo suportado por alt=media
+    # 1. Tentar baixar via API do Google Drive autenticada
     if creds_path.exists() and "drive.google.com" in url_str and file_id != "unknown":
         try:
             from google.oauth2.service_account import Credentials
@@ -72,16 +98,18 @@ def baixar_anexo_drive(url_ou_id: str, pendencia_id: str = "GENERICO") -> str:
                     for chunk in res.iter_content(chunk_size=8192):
                         f.write(chunk)
                 
-                with open(local_filepath, "rb") as f:
-                    head = f.read(512)
-                    if b"<!DOCTYPE" not in head and b"<html" not in head:
-                        logger.info(f"📥 Anexo baixado com sucesso via Conta de Serviço: {local_filepath.name}")
-                        return str(local_filepath.resolve())
-                os.remove(local_filepath)
+                valid_path = check_and_rename_file(local_filepath)
+                if valid_path:
+                    logger.info(f"📥 Anexo baixado com sucesso via Conta de Serviço: {valid_path}")
+                    return valid_path
+                try:
+                    os.remove(local_filepath)
+                except Exception:
+                    pass
         except Exception as e:
             logger.warning(f"Tentativa de download via API falhou: {e}")
 
-    # 2. Tentar download via URL pública direta formatada (foto_url_direta)
+    # 2. Tentar download via URL pública direta formatada
     try:
         session = requests.Session()
         res = session.get(url_str, stream=True, timeout=30)
@@ -91,14 +119,15 @@ def baixar_anexo_drive(url_ou_id: str, pendencia_id: str = "GENERICO") -> str:
                 for chunk in res.iter_content(chunk_size=8192):
                     f.write(chunk)
 
-            # Validar se não baixou página HTML de erro/login
-            with open(local_filepath, "rb") as f:
-                head = f.read(512)
-                if b"<!DOCTYPE" not in head and b"<html" not in head and len(head) > 50:
-                    logger.info(f"📥 Anexo baixado via URL pública: {local_filepath.name}")
-                    return str(local_filepath.resolve())
+            valid_path = check_and_rename_file(local_filepath)
+            if valid_path:
+                logger.info(f"📥 Anexo baixado via URL pública: {valid_path}")
+                return valid_path
             
-            os.remove(local_filepath)
+            try:
+                os.remove(local_filepath)
+            except Exception:
+                pass
             logger.warning(f"⚠️ O link do anexo retornou uma página bloqueada (HTML) em vez do arquivo. Verifique se o link está público.")
     except Exception as e:
         logger.warning(f"Erro ao baixar anexo público: {e}")
