@@ -25,7 +25,11 @@ async function connectToWhatsApp() {
         auth: state,
         printQRInTerminal: false,
         syncFullHistory: false, // Prevents Request Time-out on init queries
-        markOnlineOnConnect: false // Reduces initial connection overhead
+        markOnlineOnConnect: false, // Reduces initial connection overhead
+        connectTimeoutMs: 60000, // 60s timeout instead of 20s
+        defaultQueryTimeoutMs: 60000,
+        keepAliveIntervalMs: 10000,
+        generateHighQualityLinkPreview: false
     });
 
     sock.ev.on('creds.update', saveCreds);
