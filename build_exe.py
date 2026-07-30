@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent
 
 def build_exe():
     print("==================================================")
-    print("INICIANDO COMPILACAO DO COBRA BOT COM PYINSTALLER")
+    print("INICIANDO COMPILACAO DO COBOBRABOT COM PYINSTALLER")
     print("==================================================")
 
     cmd = [
@@ -19,7 +19,7 @@ def build_exe():
         "--onefile",
         "--noconsole",
         "--clean",
-        "--name=CobraBot",
+        "--name=CobobraBot",
         "--add-data=config;config",
         "--add-data=src/assets;src/assets",
         "--icon=src/assets/icon.ico",
@@ -32,7 +32,7 @@ def build_exe():
     if result.returncode == 0:
         print("\n==================================================")
         print("COMPILACAO CONCLUIDA COM SUCESSO!")
-        print("O arquivo executavel esta disponivel em: dist/CobraBot.exe")
+        print("O arquivo executavel esta disponivel em: dist/CobobraBot.exe")
         print("==================================================")
     else:
         print(f"\nFalha na compilacao com PyInstaller (Codigo de erro: {result.returncode})")

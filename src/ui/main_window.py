@@ -15,19 +15,25 @@ from config.settings import settings
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Cobra Bot - Núcleo de Qualidade")
+        self.setWindowTitle("CobobraBot - Núcleo de Qualidade")
         self.resize(1100, 720)
         self.setMinimumSize(900, 600)
         self.setStyleSheet(GLASS_STYLE)
 
         import sys
         if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-            icon_path = Path(sys._MEIPASS) / "src" / "assets" / "icon.png"
+            icon_ico = Path(sys._MEIPASS) / "src" / "assets" / "icon.ico"
+            icon_png = Path(sys._MEIPASS) / "src" / "assets" / "icon.png"
         else:
-            icon_path = settings.BASE_DIR / "src" / "assets" / "icon.png"
+            icon_ico = settings.BASE_DIR / "src" / "assets" / "icon.ico"
+            icon_png = settings.BASE_DIR / "src" / "assets" / "icon.png"
 
-        if icon_path.exists():
-            self.setWindowIcon(QIcon(str(icon_path)))
+        icon_target = icon_ico if icon_ico.exists() else icon_png
+        if icon_target.exists():
+            w_icon = QIcon(str(icon_target))
+            if icon_png.exists():
+                w_icon.addFile(str(icon_png))
+            self.setWindowIcon(w_icon)
 
         self.init_ui()
 
@@ -65,7 +71,7 @@ class MainWindow(QMainWindow):
         brand_text_layout = QVBoxLayout()
         brand_text_layout.setSpacing(2)
 
-        brand_label = QLabel("Cobra Bot")
+        brand_label = QLabel("CobobraBot")
         brand_label.setObjectName("headerTitle")
         sub_brand = QLabel("Núcleo de Qualidade")
         sub_brand.setObjectName("subText")
