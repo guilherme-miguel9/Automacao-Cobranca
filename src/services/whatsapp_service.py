@@ -163,7 +163,8 @@ class WhatsAppService:
             data_maxima=pendencia.data_maxima,
             hora_limite=pendencia.hora_limite,
             valor=pendencia.valor,
-            codigo_barras=pendencia.codigo_barras
+            codigo_barras=pendencia.codigo_barras,
+            mensagem_programada=pendencia.mensagem_programada
         )
 
         midia_anexo = baixar_anexo_drive(pendencia.foto_url_direta, pendencia.pendencia_id)
