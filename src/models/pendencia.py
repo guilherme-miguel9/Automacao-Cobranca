@@ -93,9 +93,10 @@ class Pendencia:
 
     def pode_enviar_hoje(self) -> bool:
         """
-        Verifica se a mensagem tem uma data programada.
-        Se não tiver (vazia), retorna True (pode enviar qualquer dia, até data_maxima).
-        Se tiver, só retorna True se a data programada for igual à data de hoje.
+        Verifica se a mensagem tem uma data/hora programada.
+        Se não tiver (vazia), retorna True (pode enviar qualquer hora, segue agendamento automático).
+        Se tiver apenas data, só retorna True se for o dia exato de hoje.
+        Se tiver data e hora, só retorna True se o momento atual for maior ou igual à data e hora programada.
         """
         dt_str = str(self.mensagem_programada or "").strip()
         if not dt_str:
@@ -103,16 +104,24 @@ class Pendencia:
 
         from datetime import datetime
         try:
-            dt_prog = None
-            for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S", "%d/%m/%Y", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+            # Tentar formatos com Hora e Minuto
+            for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"):
+                try:
+                    dt_prog = datetime.strptime(dt_str, fmt)
+                    # Tem hora! Só envia se passou do momento exato programado
+                    return datetime.now() >= dt_prog
+                except ValueError:
+                    continue
+            
+            # Tentar formatos somente com Data
+            for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
                 try:
                     dt_prog = datetime.strptime(dt_str, fmt).date()
-                    break
+                    # Não tem hora, só data. Envia em qualquer momento daquele dia (desde as 00:00).
+                    return dt_prog == datetime.now().date()
                 except ValueError:
                     continue
 
-            if dt_prog:
-                return dt_prog == datetime.now().date()
         except Exception:
             pass
 
