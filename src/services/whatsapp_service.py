@@ -7,7 +7,7 @@ from src.utils.formatters import formatar_mensagem_pendencia
 from src.utils.logger import logger
 from config.settings import settings
 
-def baixar_anexo_drive(url_ou_id: str) -> str:
+def baixar_anexo_drive(url_ou_id: str, pendencia_id: str = "GENERICO") -> str:
     """
     Baixa o arquivo do Google Drive usando a URL de download direto ou API.
     """
@@ -37,7 +37,7 @@ def baixar_anexo_drive(url_ou_id: str) -> str:
     elif "ext=docx" in url_str or "format=docx" in url_str:
         ext = ".docx"
         
-    local_filepath = temp_dir / f"anexo_{file_id}{ext}"
+    local_filepath = temp_dir / f"PENDENCIA_{pendencia_id}{ext}"
 
     # Se o arquivo local já existe, verificar se é um arquivo de mídia válido (não HTML)
     if local_filepath.exists():
@@ -137,7 +137,7 @@ class WhatsAppService:
             codigo_barras=pendencia.codigo_barras
         )
 
-        midia_anexo = baixar_anexo_drive(pendencia.foto_url_direta)
+        midia_anexo = baixar_anexo_drive(pendencia.foto_url_direta, pendencia.pendencia_id)
 
         if self.dry_run:
             info_foto = f"\n[Anexo]: {midia_anexo}" if midia_anexo else ""
