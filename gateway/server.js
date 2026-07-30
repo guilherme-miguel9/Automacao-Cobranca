@@ -46,6 +46,14 @@ async function connectToWhatsApp() {
             isConnected = false;
             if (shouldReconnect) {
                 connectToWhatsApp();
+            } else {
+                console.log('🔄 Sessão inválida ou deslogada. Apagando credenciais antigas para gerar novo QR Code...');
+                try {
+                    fs.rmSync(sessionPath, { recursive: true, force: true });
+                } catch(e) {
+                    console.log('Erro ao apagar sessão:', e);
+                }
+                setTimeout(connectToWhatsApp, 2000);
             }
         } else if (connection === 'open') {
             console.log('\n==================================================');
