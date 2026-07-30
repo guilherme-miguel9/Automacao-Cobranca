@@ -23,7 +23,9 @@ async function connectToWhatsApp() {
 
     sock = makeWASocket({
         auth: state,
-        printQRInTerminal: false
+        printQRInTerminal: false,
+        syncFullHistory: false, // Prevents Request Time-out on init queries
+        markOnlineOnConnect: false // Reduces initial connection overhead
     });
 
     sock.ev.on('creds.update', saveCreds);
