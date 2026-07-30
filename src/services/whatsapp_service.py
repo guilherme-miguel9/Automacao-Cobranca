@@ -9,22 +9,35 @@ from config.settings import settings
 
 def baixar_anexo_drive(url_ou_id: str) -> str:
     """
-    Baixa o arquivo do Google Drive (PDF/imagem) usando a Conta de Serviço (google_credentials.json)
-    ou URL direta de download público. Valida se o arquivo baixado é mídia válida e não um HTML de aviso.
+    Baixa o arquivo do Google Drive usando a URL de download direto ou API.
     """
     if not url_ou_id:
         return ""
     
     url_str = str(url_ou_id).strip()
-    drive_match = re.search(r"(?:file/d/|id=)([\w-]+)", url_str)
     
-    if not drive_match or "drive.google.com" not in url_str:
+    # Se não for URL do Google, repassa direto
+    if "drive.google.com" not in url_str and "docs.google.com" not in url_str:
         return url_str
 
-    file_id = drive_match.group(1)
+    import re
+    drive_match = re.search(r"(?:id=)([\w-]+)", url_str)
+    if not drive_match:
+        drive_match = re.search(r"/d/([\w-]+)", url_str)
+    
+    file_id = drive_match.group(1) if drive_match else "unknown"
+    
     temp_dir = settings.TEMP_DIR
     temp_dir.mkdir(parents=True, exist_ok=True)
-    local_filepath = temp_dir / f"anexo_{file_id}.pdf"
+    
+    # Detecta a extensão esperada pelo formato da URL
+    ext = ".pdf"
+    if "format=xlsx" in url_str:
+        ext = ".xlsx"
+    elif "format=docx" in url_str:
+        ext = ".docx"
+        
+    local_filepath = temp_dir / f"anexo_{file_id}{ext}"
 
     # Se o arquivo local já existe, verificar se é um arquivo de mídia válido (não HTML)
     if local_filepath.exists():
@@ -39,8 +52,8 @@ def baixar_anexo_drive(url_ou_id: str) -> str:
 
     creds_path = settings.GOOGLE_CREDENTIALS_FILE
 
-    # 1. Tentar baixar via API do Google Drive autenticada (Conta de Serviço)
-    if creds_path.exists():
+    # 1. Tentar baixar via API do Google Drive autenticada (Conta de Serviço) SOMENTE se for um ID nativo suportado por alt=media
+    if creds_path.exists() and "drive.google.com" in url_str and file_id != "unknown":
         try:
             from google.oauth2.service_account import Credentials
             import google.auth.transport.requests
@@ -59,21 +72,19 @@ def baixar_anexo_drive(url_ou_id: str) -> str:
                     for chunk in res.iter_content(chunk_size=8192):
                         f.write(chunk)
                 
-                # Validar se o conteúdo não é HTML
                 with open(local_filepath, "rb") as f:
                     head = f.read(512)
                     if b"<!DOCTYPE" not in head and b"<html" not in head:
-                        logger.info(f"📥 Anexo do Google Drive baixado com sucesso via Conta de Serviço: {local_filepath.name}")
+                        logger.info(f"📥 Anexo baixado com sucesso via Conta de Serviço: {local_filepath.name}")
                         return str(local_filepath.resolve())
                 os.remove(local_filepath)
         except Exception as e:
-            logger.warning(f"Tentativa de download via API do Drive falhou: {e}")
+            logger.warning(f"Tentativa de download via API falhou: {e}")
 
-    # 2. Tentar download via URL pública direta com confirmação
+    # 2. Tentar download via URL pública direta formatada (foto_url_direta)
     try:
         session = requests.Session()
-        download_url = f"https://drive.usercontent.google.com/download?id={file_id}&export=download&confirm=t"
-        res = session.get(download_url, stream=True, timeout=30)
+        res = session.get(url_str, stream=True, timeout=30)
 
         if res.status_code == 200:
             with open(local_filepath, "wb") as f:
@@ -84,13 +95,13 @@ def baixar_anexo_drive(url_ou_id: str) -> str:
             with open(local_filepath, "rb") as f:
                 head = f.read(512)
                 if b"<!DOCTYPE" not in head and b"<html" not in head and len(head) > 50:
-                    logger.info(f"📥 Anexo do Google Drive baixado via URL pública: {local_filepath.name}")
+                    logger.info(f"📥 Anexo baixado via URL pública: {local_filepath.name}")
                     return str(local_filepath.resolve())
             
             os.remove(local_filepath)
-            logger.warning(f"⚠️ O link do Google Drive ({file_id}) retornou uma página de acesso negado/HTML em vez do arquivo.")
+            logger.warning(f"⚠️ O link do anexo retornou uma página bloqueada (HTML) em vez do arquivo. Verifique se o link está público.")
     except Exception as e:
-        logger.warning(f"Erro ao baixar anexo público do Google Drive: {e}")
+        logger.warning(f"Erro ao baixar anexo público: {e}")
 
     return ""
 
@@ -126,7 +137,7 @@ class WhatsAppService:
             codigo_barras=pendencia.codigo_barras
         )
 
-        midia_anexo = baixar_anexo_drive(pendencia.foto_url)
+        midia_anexo = baixar_anexo_drive(pendencia.foto_url_direta)
 
         if self.dry_run:
             info_foto = f"\n[Anexo]: {midia_anexo}" if midia_anexo else ""
