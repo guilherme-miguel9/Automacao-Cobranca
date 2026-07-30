@@ -27,10 +27,20 @@ class Pendencia:
             return ""
         url = str(self.foto_url).strip()
         import re
-        drive_match = re.search(r"(?:file/d/|id=)([\w-]+)", url)
-        if drive_match and "drive.google.com" in url:
+        # Extrai o ID de links do drive (file/d/, id=, ou docs.google.com/.../d/)
+        drive_match = re.search(r"(?:file/d/|id=|/d/)([\w-]+)", url)
+        if drive_match and ("drive.google.com" in url or "docs.google.com" in url):
             file_id = drive_match.group(1)
-            return f"https://drive.google.com/uc?export=download&id={file_id}"
+            
+            # Se for uma planilha nativa do Google Sheets, exporta como Excel (xlsx)
+            if "spreadsheets" in url:
+                return f"https://docs.google.com/spreadsheets/d/{file_id}/export?format=xlsx"
+            # Se for um documento nativo do Google Docs, exporta como PDF
+            elif "document" in url:
+                return f"https://docs.google.com/document/d/{file_id}/export?format=pdf"
+            # Padrão para arquivos genéricos no Drive (imagens, excels subidos, etc)
+            else:
+                return f"https://drive.google.com/uc?export=download&id={file_id}"
         return url
 
     @property

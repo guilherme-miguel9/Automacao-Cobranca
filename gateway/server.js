@@ -131,14 +131,14 @@ app.post('/api/v1/send-message', async (req, res) => {
                 });
                 console.log(`📸 Imagem enviada com legenda para ${cleanNumber}`);
             } else {
-                // PDFs, Excel, Documentos genéricos: Envia o texto primeiro e o documento em seguida
-                await sock.sendMessage(jid, { text: message });
+                // PDFs, Excel, Documentos genéricos: Envia em uma única bolha com legenda!
                 await sock.sendMessage(jid, {
                     document: mediaSource,
                     mimetype: mimetype,
-                    fileName: fileName
+                    fileName: fileName,
+                    caption: message // Legenda junto ao documento
                 });
-                console.log(`📄 Texto e Documento (${fileName}) entregues com sucesso para ${cleanNumber}`);
+                console.log(`📄 Documento (${fileName}) enviado com legenda para ${cleanNumber}`);
             }
         } else {
             // Envio apenas de texto
