@@ -2,6 +2,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, 
     QStackedWidget, QLabel, QFrame
 )
+from pathlib import Path
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QIcon
 from src.ui.styles import GLASS_STYLE
@@ -42,7 +43,12 @@ class MainWindow(QMainWindow):
         brand_container.setSpacing(12)
 
         icon_label = QLabel()
-        icon_path = settings.BASE_DIR / "src" / "assets" / "icon.png"
+        import sys
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            icon_path = Path(sys._MEIPASS) / "src" / "assets" / "icon.png"
+        else:
+            icon_path = settings.BASE_DIR / "src" / "assets" / "icon.png"
+
         if icon_path.exists():
             pixmap = QPixmap(str(icon_path)).scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             icon_label.setPixmap(pixmap)
