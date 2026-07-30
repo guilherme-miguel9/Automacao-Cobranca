@@ -2,8 +2,11 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Diretório Raiz do Projeto
-BASE_DIR = Path(__file__).resolve().parent.parent
+import sys
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys.executable).resolve().parent
+else:
+    BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Carregar arquivo .env se existir
 env_path = BASE_DIR / "config" / ".env"

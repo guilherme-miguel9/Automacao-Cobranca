@@ -78,7 +78,7 @@ class QRView(QWidget):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(12)
 
-        self.btn_check = QPushButton("🔄 Verificar Conexão")
+        self.btn_check = QPushButton("Verificar Conexao")
         self.btn_check.setObjectName("primaryButton")
         self.btn_check.clicked.connect(self.check_status)
 
@@ -97,19 +97,19 @@ class QRView(QWidget):
         self.check_status()
 
     def check_status(self):
-        self.status_badge.setText("Verificando Conexão com Gateway...")
+        self.status_badge.setText("Verificando Conexao com Gateway...")
         self.worker = HealthCheckWorker()
         self.worker.status_signal.connect(self.on_status_result)
         self.worker.start()
 
     def on_status_result(self, is_online: bool, message: str):
         if is_online:
-            self.status_badge.setText("🟢 WHATSAPP CONECTADO E OPERACIONAL")
+            self.status_badge.setText("STATUS: WHATSAPP CONECTADO E OPERACIONAL")
             self.status_badge.setObjectName("statusBadgeOnline")
             self.status_badge.setStyle(self.status_badge.style())
             self.show_connected_graphic()
         else:
-            self.status_badge.setText(f"🔴 {message}")
+            self.status_badge.setText(f"STATUS: {message.upper()}")
             self.status_badge.setObjectName("statusBadgeOffline")
             self.status_badge.setStyle(self.status_badge.style())
             self.show_placeholder_qr()
@@ -118,16 +118,16 @@ class QRView(QWidget):
         pixmap = QPixmap(240, 240)
         pixmap.fill(Qt.transparent)
         self.qr_label.setPixmap(pixmap)
-        self.qr_label.setText("✅ WhatsApp Pronto\npara Enviar Notificações!")
+        self.qr_label.setText("WhatsApp Conectado\nSistema Operacional")
         self.qr_label.setStyleSheet(
-            "color: #34D399; font-size: 16px; font-weight: 700; "
+            "color: #34D399; font-size: 15px; font-weight: 700; "
             "background-color: rgba(16, 185, 129, 0.1); "
             "border: 2px solid rgba(52, 211, 153, 0.5); "
             "border-radius: 16px;"
         )
 
     def show_placeholder_qr(self):
-        self.qr_label.setText("📱 Inicie o Gateway Node\npara ler o QR Code")
+        self.qr_label.setText("Gateway Desconectado\nInicie o Servidor Gateway Local")
         self.qr_label.setStyleSheet(
             "color: #94A3B8; font-size: 13px; "
             "background-color: rgba(15, 23, 42, 0.9); "

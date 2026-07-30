@@ -6,10 +6,10 @@ from PySide6.QtCore import Qt
 from src.utils.formatters import formatar_mensagem_pendencia
 
 DEFAULT_TEMPLATE = (
-    "Olá, *{nome_solicitante}*! 👋\n"
+    "Olá, *{nome_solicitante}*!\n"
     "Sou o assistente virtual do Núcleo de Qualidade.\n\n"
     "Notificação referente à pendência *{pendencia_id}*.\n\n"
-    "📌 *Detalhes da Pendência:*\n"
+    "*Detalhes da Pendência:*\n"
     "• *Descrição:* {descricao}\n"
     "• *Prazo Máximo:* {prazo_maximo}\n"
     "• *Hora Limite:* {hora_limite}\n\n"
@@ -83,7 +83,7 @@ class TemplateView(QWidget):
         right_layout.setContentsMargins(24, 24, 24, 24)
         right_layout.setSpacing(14)
 
-        prev_title = QLabel("📱 Pré-visualização no WhatsApp")
+        prev_title = QLabel("Pre-visualizacao no WhatsApp")
         prev_title.setObjectName("sectionTitle")
         right_layout.addWidget(prev_title)
 

@@ -42,11 +42,11 @@ class SettingsView(QWidget):
         card_layout.addWidget(self.input_sheet)
 
         # 2. Output Report Directory Selector
-        lbl_output = QLabel("Local de Armazenamento dos Relatórios em CSV:")
+        lbl_output = QLabel("Local de Armazenamento dos Relatorios em CSV:")
         out_layout = QHBoxLayout()
         self.input_output_dir = QLineEdit()
         self.input_output_dir.setText(str(settings.OUTPUT_DIR.resolve()))
-        btn_browse = QPushButton("📁 Escolher Pasta...")
+        btn_browse = QPushButton("Selecionar Pasta...")
         btn_browse.setObjectName("secondaryButton")
         btn_browse.clicked.connect(self.browse_output_dir)
         out_layout.addWidget(self.input_output_dir)
@@ -62,13 +62,13 @@ class SettingsView(QWidget):
         card_layout.addWidget(self.input_gw_url)
 
         # 4. Dry Run Mode
-        self.chk_dry_run = QCheckBox("Modo Simulação (DRY_RUN - Não dispara WhatsApp de verdade)")
+        self.chk_dry_run = QCheckBox("Modo Simulacao (DRY_RUN - Nao dispara WhatsApp real)")
         self.chk_dry_run.setChecked(settings.DRY_RUN)
         self.chk_dry_run.setStyleSheet("font-size: 13px; font-weight: 600; color: #F8FAFC;")
         card_layout.addWidget(self.chk_dry_run)
 
         # 5. Locked Google Credentials (NOT editable as requested by user)
-        lbl_creds = QLabel("🔒 Credenciais do Google Cloud (google_credentials.json) - [Bloqueado / Não Editável]:")
+        lbl_creds = QLabel("Credenciais Google Cloud (google_credentials.json) [Embutido no Projeto - Leitura Automatizada]:")
         self.input_creds = QLineEdit()
         self.input_creds.setText(str(settings.GOOGLE_CREDENTIALS_FILE))
         self.input_creds.setReadOnly(True)
@@ -76,7 +76,7 @@ class SettingsView(QWidget):
         card_layout.addWidget(self.input_creds)
 
         # Save Button
-        btn_save = QPushButton("💾 Salvar Alterações no .env")
+        btn_save = QPushButton("Salvar Alteracoes no .env")
         btn_save.setObjectName("primaryButton")
         btn_save.clicked.connect(self.save_settings)
         card_layout.addWidget(btn_save, alignment=Qt.AlignRight)

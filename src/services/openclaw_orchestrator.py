@@ -24,8 +24,8 @@ class OpenClawOrchestrator:
         Executa o fluxo completo de cobrança para todas as rotas ativas.
         """
         logger.info("==================================================")
-        logger.info("🚀 INICIANDO EXECUÇÃO DO ROBÔ DE COBRANÇAS OPENCLAW")
-        logger.info(f"Modo de Execução: {'DRY_RUN (SIMULAÇÃO)' if settings.DRY_RUN else 'REAL (PRODUÇÃO)'}")
+        logger.info("INICIANDO EXECUCAO DO ROBO DE COBRANCAS OPENCLAW")
+        logger.info(f"Modo de Execucao: {'DRY_RUN (SIMULACAO)' if settings.DRY_RUN else 'REAL (PRODUCAO)'}")
         logger.info("==================================================")
 
         total_processado = 0
@@ -37,7 +37,7 @@ class OpenClawOrchestrator:
         supervisores_notificar = set()
 
         for cod_rota, rota in rotas.items():
-            logger.info(f"\n---> Processando Rota: {cod_rota} ({rota.regiao}) - {rota.quantidade_pendencias()} pendências")
+            logger.info(f"\n---> Processando Rota: {cod_rota} ({rota.regiao}) - {rota.quantidade_pendencias()} pendencias")
             
             sucessos_rota = 0
             falhas_rota = 0
@@ -54,7 +54,7 @@ class OpenClawOrchestrator:
 
                 # Verificar se o encarregado deu OK ou marcou como concluído no Sheets
                 if pendencia.esta_concluido():
-                    logger.info(f"⏭️ Ignorando pendência {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Marcada como OK no Sheets.")
+                    logger.info(f"Ignorando pendencia {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Marcada como OK no Sheets.")
                     pendencia.detalhes_envio = "Ignorado: Status OK no Sheets"
                     sucessos_rota += 1
                     total_sucesso += 1
@@ -62,15 +62,15 @@ class OpenClawOrchestrator:
 
                 # Verificar se a Data/Hora Máxima foi ultrapassada
                 if pendencia.data_maxima_expirada():
-                    logger.info(f"⏳ Ignorando pendência {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Data Máxima ({pendencia.data_maxima}) ultrapassada.")
-                    pendencia.detalhes_envio = f"Ignorado: Data Máxima Expirada ({pendencia.data_maxima})"
+                    logger.info(f"Ignorando pendencia {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Data Maxima ({pendencia.data_maxima}) ultrapassada.")
+                    pendencia.detalhes_envio = f"Ignorado: Data Maxima Expirada ({pendencia.data_maxima})"
                     falhas_rota += 1
                     total_falha += 1
                     continue
 
                 # Variação de tempo aleatória entre envios (Antispam WhatsApp: 3 a 8 segundos)
                 delay_antispam = random.uniform(3.0, 8.0)
-                logger.info(f"⏱️ Variação antispam: aguardando {delay_antispam:.1f}s antes de notificar {pendencia.nome_solicitante}...")
+                logger.info(f"Variacao antispam: aguardando {delay_antispam:.1f}s antes de notificar {pendencia.nome_solicitante}...")
                 time.sleep(delay_antispam)
 
                 sucesso = self.whatsapp_service.enviar_cobranca(pendencia)
@@ -118,7 +118,7 @@ class OpenClawOrchestrator:
         self._exportar_planilha_resultado(rotas)
 
         logger.info("\n==================================================")
-        logger.info(f"✅ PROCESSAMENTO CONCLUÍDO COM SUCESSO!")
+        logger.info(f"PROCESSAMENTO CONCLUIDO COM SUCESSO!")
         logger.info(f"Total Processado: {total_processado} | Sucessos: {total_sucesso} | Falhas: {total_falha}")
         logger.info("==================================================")
 

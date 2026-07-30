@@ -58,15 +58,15 @@ class ExecutionView(QWidget):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(14)
 
-        self.btn_run = QPushButton("⚡ Disparar Cobranças Agora")
+        self.btn_run = QPushButton("Executar Ciclo de Cobranca")
         self.btn_run.setObjectName("primaryButton")
         self.btn_run.clicked.connect(self.start_single_run)
 
-        self.btn_schedule = QPushButton("⏰ Iniciar Agendamento (08h, 11h, 14h, 17h)")
+        self.btn_schedule = QPushButton("Iniciar Agendamento Automatico (08h, 11h, 14h, 17h)")
         self.btn_schedule.setObjectName("secondaryButton")
         self.btn_schedule.clicked.connect(self.start_loop_run)
 
-        self.btn_stop = QPushButton("⏹️ Parar Execução")
+        self.btn_stop = QPushButton("Interromper Execucao")
         self.btn_stop.setObjectName("secondaryButton")
         self.btn_stop.setEnabled(False)
         self.btn_stop.clicked.connect(self.stop_run)
@@ -78,7 +78,7 @@ class ExecutionView(QWidget):
         card_layout.addLayout(btn_layout)
 
         # Live Terminal Log Output
-        log_title = QLabel("🖥️ Terminal de Logs em Tempo Real:")
+        log_title = QLabel("Terminal de Logs em Tempo Real:")
         log_title.setObjectName("sectionTitle")
         card_layout.addWidget(log_title)
 
@@ -98,7 +98,7 @@ class ExecutionView(QWidget):
         layout.addWidget(card)
 
         # Redirect Log Stream
-        self.append_log("Pronto para iniciar execuções. Selecione uma ação acima.\n")
+        self.append_log("[INFO] Sistema pronto para iniciar execuções. Selecione uma ação acima.\n")
 
     def append_log(self, text: str):
         self.log_terminal.appendPlainText(text)
@@ -107,7 +107,7 @@ class ExecutionView(QWidget):
         self.btn_run.setEnabled(False)
         self.btn_schedule.setEnabled(False)
         self.btn_stop.setEnabled(True)
-        self.append_log("🚀 Iniciando disparo de ciclo único em segundo plano...")
+        self.append_log("[INFO] Iniciando disparo de ciclo único em segundo plano...")
 
         self.worker = BotWorkerThread(mode="single")
         self.worker.finished_signal.connect(self.on_worker_finished)
@@ -117,7 +117,7 @@ class ExecutionView(QWidget):
         self.btn_run.setEnabled(False)
         self.btn_schedule.setEnabled(False)
         self.btn_stop.setEnabled(True)
-        self.append_log("⏰ Modo Agendado Ativado (Janelas: 08h, 11h, 14h, 17h)...")
+        self.append_log("[INFO] Modo Agendado Ativado (Janelas: 08h, 11h, 14h, 17h)...")
 
         self.worker = BotWorkerThread(mode="loop")
         self.worker.finished_signal.connect(self.on_worker_finished)
@@ -126,11 +126,11 @@ class ExecutionView(QWidget):
     def stop_run(self):
         if self.worker and self.worker.isRunning():
             self.worker.terminate()
-            self.append_log("⏹️ Execução interrompida pelo usuário.")
+            self.append_log("[AVISO] Execução interrompida pelo usuário.")
         self.on_worker_finished()
 
     def on_worker_finished(self):
         self.btn_run.setEnabled(True)
         self.btn_schedule.setEnabled(True)
         self.btn_stop.setEnabled(False)
-        self.append_log("✅ Ciclo finalizado.")
+        self.append_log("[SUCESSO] Ciclo finalizado.")

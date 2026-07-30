@@ -37,9 +37,9 @@ class MainWindow(QMainWindow):
         sidebar_layout.setSpacing(12)
 
         # App Brand Title
-        brand_label = QLabel("⚡ CobrançaBot")
+        brand_label = QLabel("CobrançaBot")
         brand_label.setObjectName("headerTitle")
-        sub_brand = QLabel("Automação Google Sheets")
+        sub_brand = QLabel("Núcleo de Qualidade")
         sub_brand.setObjectName("subText")
 
         sidebar_layout.addWidget(brand_label)
@@ -47,20 +47,20 @@ class MainWindow(QMainWindow):
         sidebar_layout.addSpacing(20)
 
         # Navigation Buttons
-        self.btn_nav_exec = QPushButton("⚡ Disparos & Logs")
+        self.btn_nav_exec = QPushButton("Disparos e Logs")
         self.btn_nav_exec.setObjectName("navButton")
         self.btn_nav_exec.setProperty("active", True)
         self.btn_nav_exec.clicked.connect(lambda: self.switch_tab(0, self.btn_nav_exec))
 
-        self.btn_nav_qr = QPushButton("📱 WhatsApp & QR Code")
+        self.btn_nav_qr = QPushButton("WhatsApp e QR Code")
         self.btn_nav_qr.setObjectName("navButton")
         self.btn_nav_qr.clicked.connect(lambda: self.switch_tab(1, self.btn_nav_qr))
 
-        self.btn_nav_settings = QPushButton("⚙️ Configurações & .env")
+        self.btn_nav_settings = QPushButton("Configuracoes (.env)")
         self.btn_nav_settings.setObjectName("navButton")
         self.btn_nav_settings.clicked.connect(lambda: self.switch_tab(2, self.btn_nav_settings))
 
-        self.btn_nav_template = QPushButton("📝 Template Mensagem")
+        self.btn_nav_template = QPushButton("Template de Mensagem")
         self.btn_nav_template.setObjectName("navButton")
         self.btn_nav_template.clicked.connect(lambda: self.switch_tab(3, self.btn_nav_template))
 
@@ -119,8 +119,8 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentIndex(index)
         titles = [
             "Painel Principal de Disparos",
-            "Conexão do WhatsApp & QR Code",
-            "Configurações Globais & Variáveis .env",
+            "Conexao do WhatsApp e QR Code",
+            "Configuracoes Globais e Variaveis .env",
             "Editor de Modelo de Mensagem"
         ]
         self.header_title.setText(titles[index])

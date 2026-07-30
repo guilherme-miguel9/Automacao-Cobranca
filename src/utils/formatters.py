@@ -40,10 +40,10 @@ def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descri
     """
     data_exibicao = formatar_data_limpa(data_maxima)
     msg = (
-        f"Olá, *{nome_solicitante}*! 👋\n"
+        f"Olá, *{nome_solicitante}*!\n"
         f"Sou o assistente virtual do Núcleo de Qualidade.\n\n"
         f"Notificação referente à pendência *{pendencia_id}*.\n\n"
-        f"📌 *Detalhes da Pendência:*\n"
+        f"*Detalhes da Pendência:*\n"
         f"• *Descrição:* {descricao}\n"
         f"• *Prazo Máximo:* {data_exibicao}\n"
     )
@@ -55,7 +55,7 @@ def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descri
         msg += f"• *Valor:* {formatar_moeda(valor)}\n"
 
     if codigo_barras:
-        msg += f"\n💳 *Código de Barras / Chave PIX:*\n`{codigo_barras}`\n"
+        msg += f"\n*Código de Barras / Chave PIX:*\n`{codigo_barras}`\n"
         
     msg += (
         "\nFavor verificar o andamento ou responder a esta mensagem em caso de dúvidas.\n\n"
