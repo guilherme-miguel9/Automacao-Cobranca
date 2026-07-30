@@ -69,14 +69,16 @@ class SettingsView(QWidget):
 
     def save_settings(self):
         try:
-            # Garantir existência da pasta config local no ambiente do executável
-            env_dir = settings.BASE_DIR / "config"
+            # 1. Obter valores
+            dry_val = str(self.chk_dry_run.isChecked())
+            out_val = self.input_output_dir.text().strip()
+
+            # 2. Criar diretório config no APP_DIR se não existir
+            env_dir = settings.APP_DIR / "config"
             env_dir.mkdir(parents=True, exist_ok=True)
             env_file = env_dir / ".env"
 
-            out_val = self.input_output_dir.text().strip()
-            dry_val = "True" if self.chk_dry_run.isChecked() else "False"
-
+            # 3. Reescrever o .env com as chaves customizadas
             # Preservar chaves padrão fixas do sistema no .env
             lines = [
                 f"GSHEET_SPREADSHEET_NAME={settings.GSHEET_SPREADSHEET_NAME}\n",

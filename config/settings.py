@@ -4,17 +4,19 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 if getattr(sys, 'frozen', False):
-    BASE_DIR = Path(sys.executable).resolve().parent
+    APP_DIR = Path(sys.executable).resolve().parent
+    BUNDLE_DIR = Path(sys._MEIPASS)
 else:
-    BASE_DIR = Path(__file__).resolve().parent.parent
+    APP_DIR = Path(__file__).resolve().parent.parent
+    BUNDLE_DIR = APP_DIR
 
 # Garantir existência do diretório config local ao lado do executável/projeto
-(BASE_DIR / "config").mkdir(parents=True, exist_ok=True)
+(APP_DIR / "config").mkdir(parents=True, exist_ok=True)
 
 # Carregar arquivo .env (prioriza o .env local da pasta do app, fallback para o embutido)
-env_path = BASE_DIR / "config" / ".env"
-if not env_path.exists() and getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-    bundled_env = Path(sys._MEIPASS) / "config" / ".env"
+env_path = APP_DIR / "config" / ".env"
+if not env_path.exists():
+    bundled_env = BUNDLE_DIR / "config" / ".env"
     if bundled_env.exists():
         env_path = bundled_env
 
@@ -37,13 +39,19 @@ class Settings:
     WHATSAPP_API_TOKEN: str = os.getenv("WHATSAPP_API_TOKEN", "")
 
     # Google Sheets
-    GOOGLE_CREDENTIALS_FILE: Path = BASE_DIR / os.getenv("GOOGLE_CREDENTIALS_FILE", "config/google_credentials.json")
+    _cred_app = APP_DIR / "config" / "google_credentials.json"
+    if _cred_app.exists():
+        GOOGLE_CREDENTIALS_FILE: Path = _cred_app
+    else:
+        GOOGLE_CREDENTIALS_FILE: Path = BUNDLE_DIR / "config" / "google_credentials.json"
+
     GSHEET_SPREADSHEET_NAME: str = os.getenv("GSHEET_SPREADSHEET_NAME", "Base_Pendencias")
 
-    BASE_DIR: Path = BASE_DIR
-    INPUT_DIR: Path = BASE_DIR / "data" / "input"
-    OUTPUT_DIR: Path = BASE_DIR / "data" / "output"
-    TEMP_DIR: Path = BASE_DIR / "data" / "temp_anexos"
+    APP_DIR: Path = APP_DIR
+    BUNDLE_DIR: Path = BUNDLE_DIR
+    INPUT_DIR: Path = APP_DIR / "data" / "input"
+    OUTPUT_DIR: Path = APP_DIR / "data" / "output"
+    TEMP_DIR: Path = APP_DIR / "data" / "temp_anexos"
 
 # Garantir existência dos diretórios de dados
 Settings.INPUT_DIR.mkdir(parents=True, exist_ok=True)

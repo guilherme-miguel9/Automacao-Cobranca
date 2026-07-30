@@ -22,6 +22,8 @@ def build_exe():
         "--name=CobobraBot",
         "--add-data=config;config",
         "--add-data=src/assets;src/assets",
+        "--add-data=gateway;gateway",
+        "--add-binary=C:/Program Files/nodejs/node.exe;.",
         "--icon=src/assets/icon.ico",
         "app.py"
     ]

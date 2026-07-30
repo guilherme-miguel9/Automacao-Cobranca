@@ -11,8 +11,15 @@ const PORT = 8000;
 let sock = null;
 let isConnected = false;
 
+const os = require('os');
+
+const sessionPath = path.join(os.homedir(), '.cobobrabot', 'auth_info_baileys');
+if (!fs.existsSync(sessionPath)) {
+    fs.mkdirSync(sessionPath, { recursive: true });
+}
+
 async function connectToWhatsApp() {
-    const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'auth_info_baileys'));
+    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 
     sock = makeWASocket({
         auth: state,

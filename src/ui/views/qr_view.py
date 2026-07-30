@@ -104,16 +104,25 @@ class QRView(QWidget):
     def start_gateway(self):
         import subprocess
         import sys
+        from pathlib import Path
         try:
-            gateway_dir = settings.BASE_DIR / "gateway"
-            if gateway_dir.exists():
+            if getattr(sys, 'frozen', False):
+                base_dir = Path(sys._MEIPASS)
+                node_exe = base_dir / "node.exe"
+                server_js = base_dir / "gateway" / "server.js"
+            else:
+                base_dir = settings.BASE_DIR
+                node_exe = Path("C:/Program Files/nodejs/node.exe") if sys.platform == "win32" else "node"
+                server_js = base_dir / "gateway" / "server.js"
+
+            if server_js.exists():
                 if sys.platform == "win32":
-                    subprocess.Popen(f'start cmd /k "cd /d {gateway_dir} && node server.js"', shell=True)
+                    subprocess.Popen(f'start cmd /k "\"{node_exe}\" \"{server_js}\""', shell=True)
                 else:
-                    subprocess.Popen(["node", "server.js"], cwd=str(gateway_dir))
+                    subprocess.Popen([str(node_exe), str(server_js)])
                 self.status_badge.setText("Terminal do Servidor Aberto. Escaneie o QR nele.")
             else:
-                self.status_badge.setText(f"Erro: Pasta '{gateway_dir.name}' não encontrada ao lado do .exe")
+                self.status_badge.setText(f"Erro: Servidor não encontrado em {server_js}")
         except Exception as e:
             self.status_badge.setText(f"Erro ao iniciar servidor: {str(e)}")
 
