@@ -32,9 +32,9 @@ def baixar_anexo_drive(url_ou_id: str) -> str:
     
     # Detecta a extensão esperada pelo formato da URL
     ext = ".pdf"
-    if "format=xlsx" in url_str:
+    if "ext=xlsx" in url_str or "format=xlsx" in url_str:
         ext = ".xlsx"
-    elif "format=docx" in url_str:
+    elif "ext=docx" in url_str or "format=docx" in url_str:
         ext = ".docx"
         
     local_filepath = temp_dir / f"anexo_{file_id}{ext}"

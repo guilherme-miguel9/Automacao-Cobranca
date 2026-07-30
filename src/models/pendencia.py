@@ -32,13 +32,12 @@ class Pendencia:
         if drive_match and ("drive.google.com" in url or "docs.google.com" in url):
             file_id = drive_match.group(1)
             
-            # Se for uma planilha nativa do Google Sheets, exporta como Excel (xlsx)
+            # O usuário informou que planilhas estão falhando com export?format=xlsx porque muitas vezes são arquivos .xlsx upados
+            # Vamos usar o padrão do Google Drive para todas as planilhas/documentos também
             if "spreadsheets" in url:
-                return f"https://docs.google.com/spreadsheets/d/{file_id}/export?format=xlsx"
-            # Se for um documento nativo do Google Docs, exporta como PDF
+                return f"https://drive.google.com/uc?export=download&id={file_id}&ext=xlsx"
             elif "document" in url:
-                return f"https://docs.google.com/document/d/{file_id}/export?format=pdf"
-            # Padrão para arquivos genéricos no Drive (imagens, excels subidos, etc)
+                return f"https://drive.google.com/uc?export=download&id={file_id}&ext=pdf"
             else:
                 return f"https://drive.google.com/uc?export=download&id={file_id}"
         return url
