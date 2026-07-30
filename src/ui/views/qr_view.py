@@ -27,7 +27,7 @@ class HealthCheckWorker(QThread):
             else:
                 self.status_signal.emit(False, f"Gateway offline (HTTP {res.status_code})")
         except Exception as e:
-            self.status_signal.emit(False, f"Gateway local inacessível (Porta 8000)")
+            self.status_signal.emit(False, f"Gateway local inacessível: {str(e)}")
 
 class QRView(QWidget):
     def __init__(self, parent=None):
@@ -82,7 +82,12 @@ class QRView(QWidget):
         self.btn_check.setObjectName("primaryButton")
         self.btn_check.clicked.connect(self.check_status)
 
+        self.btn_start_gateway = QPushButton("Iniciar Servidor WhatsApp")
+        self.btn_start_gateway.setObjectName("secondaryButton")
+        self.btn_start_gateway.clicked.connect(self.start_gateway)
+
         btn_layout.addWidget(self.btn_check)
+        btn_layout.addWidget(self.btn_start_gateway)
 
         # Assembly
         card_layout.addWidget(title, alignment=Qt.AlignCenter)
@@ -95,6 +100,22 @@ class QRView(QWidget):
         
         # Initial Check
         self.check_status()
+
+    def start_gateway(self):
+        import subprocess
+        import sys
+        try:
+            gateway_dir = settings.BASE_DIR / "gateway"
+            if gateway_dir.exists():
+                if sys.platform == "win32":
+                    subprocess.Popen(f'start cmd /k "cd /d {gateway_dir} && node server.js"', shell=True)
+                else:
+                    subprocess.Popen(["node", "server.js"], cwd=str(gateway_dir))
+                self.status_badge.setText("Terminal do Servidor Aberto. Escaneie o QR nele.")
+            else:
+                self.status_badge.setText(f"Erro: Pasta '{gateway_dir.name}' não encontrada ao lado do .exe")
+        except Exception as e:
+            self.status_badge.setText(f"Erro ao iniciar servidor: {str(e)}")
 
     def check_status(self):
         self.status_badge.setText("Verificando Conexao com Gateway...")
