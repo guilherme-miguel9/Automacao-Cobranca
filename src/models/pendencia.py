@@ -16,6 +16,7 @@ class Pendencia:
     codigo_barras: Optional[str] = ""   # Código de Barras / Chave PIX (opcional)
     status: str = "PENDENTE"            # Status: PENDENTE, ENVIADO, FALHA
     detalhes_envio: Optional[str] = ""   # Log de envio
+    mensagem_programada: Optional[str] = "" # Data para disparo programado (opcional)
 
     @property
     def foto_url_direta(self) -> str:
@@ -80,6 +81,33 @@ class Pendencia:
             pass
 
         return False
+
+    def pode_enviar_hoje(self) -> bool:
+        """
+        Verifica se a mensagem tem uma data programada.
+        Se não tiver (vazia), retorna True (pode enviar qualquer dia, até data_maxima).
+        Se tiver, só retorna True se a data programada for igual à data de hoje.
+        """
+        dt_str = str(self.mensagem_programada or "").strip()
+        if not dt_str:
+            return True
+
+        from datetime import datetime
+        try:
+            dt_prog = None
+            for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S", "%d/%m/%Y", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+                try:
+                    dt_prog = datetime.strptime(dt_str, fmt).date()
+                    break
+                except ValueError:
+                    continue
+
+            if dt_prog:
+                return dt_prog == datetime.now().date()
+        except Exception:
+            pass
+
+        return True # Se houver erro de formatação absurdo, melhor tentar enviar do que ignorar para sempre
 
     def formatar_telefone_valido(self) -> str:
         from src.utils.formatters import formatar_telefone

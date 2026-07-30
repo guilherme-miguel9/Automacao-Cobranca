@@ -68,6 +68,17 @@ class OpenClawOrchestrator:
                     total_falha += 1
                     continue
 
+                # Verificar se existe uma data programada e se hoje é o dia correto
+                if not pendencia.pode_enviar_hoje():
+                    logger.info(f"Ignorando pendencia {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Programado para {pendencia.mensagem_programada} (hoje e outra data).")
+                    pendencia.detalhes_envio = f"Ignorado: Programado para {pendencia.mensagem_programada}"
+                    # Para não contabilizar como falha dura no report, você pode tratar como sucesso pulado ou falha.
+                    # Mas como ele não enviou ainda e não deve, vamos registrar como sucesso na leitura mas sem envio (ou falha técnica).
+                    # A melhor forma é registrar nos detalhes e continuar, mas mantendo a lógica de falhas_rota para ele tentar amanhã de novo.
+                    falhas_rota += 1
+                    total_falha += 1
+                    continue
+
                 # Variação de tempo aleatória entre envios (Antispam WhatsApp: 3 a 8 segundos)
                 delay_antispam = random.uniform(3.0, 8.0)
                 logger.info(f"Variacao antispam: aguardando {delay_antispam:.1f}s antes de notificar {pendencia.nome_solicitante}...")

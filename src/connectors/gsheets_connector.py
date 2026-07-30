@@ -94,7 +94,8 @@ class GoogleSheetsConnector:
                         rota_codigo=str(row_norm.get("rota_codigo", row_norm.get("rota", "ROTA_PADRAO"))).strip(),
                         hora_limite=str(row_norm.get("hora_limite", row_norm.get("hora_máxima", row_norm.get("hora_maxima", row_norm.get("hora", row_norm.get("horário", row_norm.get("horario", ""))))))).strip(),
                         codigo_barras=str(row_norm.get("codigo_barras", row_norm.get("pix", ""))) if row_norm.get("codigo_barras", row_norm.get("pix", "")) else "",
-                        status=str(row_norm.get("status", row_norm.get("ok", row_norm.get("confirmado", row_norm.get("resposta", row_norm.get("situação", row_norm.get("situacao", "PENDENTE"))))))).strip()
+                        status=str(row_norm.get("status", row_norm.get("ok", row_norm.get("confirmado", row_norm.get("resposta", row_norm.get("situação", row_norm.get("situacao", "PENDENTE"))))))).strip(),
+                        mensagem_programada=str(row_norm.get("mensagem_programada", row_norm.get("agendamento", ""))).strip()
                     )
                     pendencias.append(p)
                 except Exception as ex:

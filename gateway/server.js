@@ -65,6 +65,8 @@ async function connectToWhatsApp() {
     });
 }
 
+const mime = require('mime-types');
+
 // Endpoint de Envio de Mensagem (Compatível com o Robô Python)
 app.post('/api/v1/send-message', async (req, res) => {
     if (!isConnected || !sock) {
@@ -89,29 +91,39 @@ app.post('/api/v1/send-message', async (req, res) => {
             }
 
             let isImage = false;
-            let mimetype = 'application/pdf';
-            let fileName = 'Anexo_Pendencia.pdf';
+            let mimetype = 'application/octet-stream';
+            let fileName = path.basename(media_url) || 'Documento_Anexo';
 
-            if (fileBuffer && fileBuffer.length > 4) {
-                const headerHex = fileBuffer.slice(0, 4).toString('hex');
-                const headerStr = fileBuffer.slice(0, 4).toString('ascii');
-
-                if (headerStr === '%PDF') {
-                    isImage = false;
-                    mimetype = 'application/pdf';
-                    fileName = 'Documento_Pendencia.pdf';
-                } else if (headerHex.startsWith('ffd8') || headerHex === '89504e47' || headerStr.startsWith('RIFF')) {
-                    isImage = true;
-                    mimetype = headerHex.startsWith('ffd8') ? 'image/jpeg' : 'image/png';
-                }
+            // Detect mimetype from extension
+            const extMime = mime.lookup(media_url);
+            if (extMime) {
+                mimetype = extMime;
+                isImage = mimetype.startsWith('image/');
             } else {
-                const urlLower = media_url.toLowerCase();
-                isImage = (urlLower.includes('.png') || urlLower.includes('.jpg') || urlLower.includes('.jpeg') || urlLower.includes('.webp')) && !urlLower.includes('.pdf');
+                // Secrecy fallback by header (for raw files without extension)
+                if (fileBuffer && fileBuffer.length > 4) {
+                    const headerHex = fileBuffer.slice(0, 4).toString('hex');
+                    const headerStr = fileBuffer.slice(0, 4).toString('ascii');
+
+                    if (headerStr === '%PDF') {
+                        isImage = false;
+                        mimetype = 'application/pdf';
+                        fileName = fileName.includes('.') ? fileName : fileName + '.pdf';
+                    } else if (headerHex.startsWith('ffd8')) {
+                        isImage = true;
+                        mimetype = 'image/jpeg';
+                        fileName = fileName.includes('.') ? fileName : fileName + '.jpg';
+                    } else if (headerHex === '89504e47') {
+                        isImage = true;
+                        mimetype = 'image/png';
+                        fileName = fileName.includes('.') ? fileName : fileName + '.png';
+                    }
+                }
             }
 
             const mediaSource = fileBuffer ? fileBuffer : { url: media_url };
 
-            if (isImage) {
+            if (isImage && !mimetype.includes('pdf')) {
                 // Fotos e Imagens aceitam mensagem como legenda na mesma mensagem
                 await sock.sendMessage(jid, {
                     image: mediaSource,
@@ -119,14 +131,14 @@ app.post('/api/v1/send-message', async (req, res) => {
                 });
                 console.log(`📸 Imagem enviada com legenda para ${cleanNumber}`);
             } else {
-                // PDFs e Documentos: Envia o texto primeiro e o documento em seguida
+                // PDFs, Excel, Documentos genéricos: Envia o texto primeiro e o documento em seguida
                 await sock.sendMessage(jid, { text: message });
                 await sock.sendMessage(jid, {
                     document: mediaSource,
                     mimetype: mimetype,
                     fileName: fileName
                 });
-                console.log(`📄 Texto e Documento PDF entregues com sucesso para ${cleanNumber}`);
+                console.log(`📄 Texto e Documento (${fileName}) entregues com sucesso para ${cleanNumber}`);
             }
         } else {
             // Envio apenas de texto
