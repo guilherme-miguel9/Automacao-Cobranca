@@ -13,6 +13,8 @@ def build_exe():
     print("INICIANDO COMPILACAO DO COBRANCABOT COM PYINSTALLER")
     print("==================================================")
 
+    icon_path = BASE_DIR / "src" / "assets" / "icon.ico"
+
     cmd = [
         sys.executable,
         "-m", "PyInstaller",
@@ -20,6 +22,8 @@ def build_exe():
         "--noconsole",
         "--name=CobrancaBot",
         "--add-data=config;config",
+        "--add-data=src/assets;src/assets",
+        f"--icon={icon_path}",
         "app.py"
     ]
 

@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (
     QStackedWidget, QLabel, QFrame
 )
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap, QIcon
 from src.ui.styles import GLASS_STYLE
 from src.ui.views.execution_view import ExecutionView
 from src.ui.views.qr_view import QRView
@@ -36,14 +37,31 @@ class MainWindow(QMainWindow):
         sidebar_layout.setContentsMargins(16, 24, 16, 24)
         sidebar_layout.setSpacing(12)
 
-        # App Brand Title
+        # App Brand Title with Logo Icon
+        brand_container = QHBoxLayout()
+        brand_container.setSpacing(12)
+
+        icon_label = QLabel()
+        icon_path = settings.BASE_DIR / "src" / "assets" / "icon.png"
+        if icon_path.exists():
+            pixmap = QPixmap(str(icon_path)).scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            icon_label.setPixmap(pixmap)
+
+        brand_text_layout = QVBoxLayout()
+        brand_text_layout.setSpacing(2)
+
         brand_label = QLabel("CobrançaBot")
         brand_label.setObjectName("headerTitle")
         sub_brand = QLabel("Núcleo de Qualidade")
         sub_brand.setObjectName("subText")
 
-        sidebar_layout.addWidget(brand_label)
-        sidebar_layout.addWidget(sub_brand)
+        brand_text_layout.addWidget(brand_label)
+        brand_text_layout.addWidget(sub_brand)
+
+        brand_container.addWidget(icon_label)
+        brand_container.addLayout(brand_text_layout)
+
+        sidebar_layout.addLayout(brand_container)
         sidebar_layout.addSpacing(20)
 
         # Navigation Buttons
