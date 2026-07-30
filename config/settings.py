@@ -51,7 +51,9 @@ class Settings:
     BUNDLE_DIR: Path = BUNDLE_DIR
     INPUT_DIR: Path = APP_DIR / "data" / "input"
     OUTPUT_DIR: Path = APP_DIR / "data" / "output"
-    TEMP_DIR: Path = APP_DIR / "data" / "temp_anexos"
+    
+    import tempfile
+    TEMP_DIR: Path = Path(tempfile.gettempdir()) / "CobobraBot" / "temp_anexos"
 
 # Garantir existência dos diretórios de dados
 Settings.INPUT_DIR.mkdir(parents=True, exist_ok=True)
