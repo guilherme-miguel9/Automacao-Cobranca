@@ -41,7 +41,7 @@ def formatar_data_limpa(data_str: str) -> str:
     data_clean = str(data_str).strip()
     return data_clean.replace(" 00:00:00", "").replace(" 00:00", "")
 
-def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descricao: str, data_maxima: str, hora_limite: str = "", valor: float = 0.0, codigo_barras: str = "") -> str:
+def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descricao: str, data_maxima: str, hora_limite: str = "", valor: float = 0.0, codigo_barras: str = "", mensagem_programada: str = "") -> str:
     """
     Gera a mensagem padronizada do WhatsApp para aviso de pendência.
     """
@@ -52,11 +52,14 @@ def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descri
         f"Notificação referente à pendência *{pendencia_id}*.\n\n"
         f"*Detalhes da Pendência:*\n"
         f"• *Descrição:* {descricao}\n"
-        f"• *Prazo Máximo:* {data_exibicao}\n"
     )
     
-    if hora_limite:
-        msg += f"• *Hora Limite:* {hora_limite}\n"
+    is_agendado_sem_data = bool(mensagem_programada and not data_maxima)
+
+    if not is_agendado_sem_data:
+        msg += f"• *Prazo Máximo:* {data_exibicao}\n"
+        if hora_limite:
+            msg += f"• *Hora Limite:* {hora_limite}\n"
     
     if valor and valor > 0:
         msg += f"• *Valor:* {formatar_moeda(valor)}\n"
@@ -64,10 +67,16 @@ def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descri
     if codigo_barras:
         msg += f"\n*Código de Barras / Chave PIX:*\n`{codigo_barras}`\n"
         
-    msg += (
-        "\nFavor verificar o andamento ou responder a esta mensagem em caso de dúvidas.\n\n"
-        "Atenciosamente,\n*Equipe do Núcleo de Qualidade*"
-    )
+    if is_agendado_sem_data:
+        msg += (
+            "\nResponder a esta mensagem em caso de dúvidas.\n\n"
+        )
+    else:
+        msg += (
+            "\nFavor verificar o andamento ou responder a esta mensagem em caso de dúvidas.\n\n"
+        )
+        
+    msg += "Atenciosamente,\n*Equipe do Núcleo de Qualidade*"
     
     return msg
 
