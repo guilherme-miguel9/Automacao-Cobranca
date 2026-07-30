@@ -91,25 +91,75 @@ class Pendencia:
 
         return False
 
+    def ja_enviado_hoje(self) -> bool:
+        from datetime import datetime
+        from config.settings import settings
+        import json
+        
+        hoje = datetime.now().strftime("%Y-%m-%d")
+        cache_file = settings.APP_DIR / "config" / "envios_cache.json"
+        try:
+            if cache_file.exists():
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    cache = json.load(f)
+            else:
+                cache = {}
+            if cache.get("data") != hoje:
+                return False
+            return self.pendencia_id in cache.get("enviados", [])
+        except Exception:
+            return False
+
+    def registrar_envio(self):
+        from datetime import datetime
+        from config.settings import settings
+        import json
+        
+        hoje = datetime.now().strftime("%Y-%m-%d")
+        cache_file = settings.APP_DIR / "config" / "envios_cache.json"
+        try:
+            if cache_file.exists():
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    cache = json.load(f)
+            else:
+                cache = {"data": hoje, "enviados": []}
+                
+            if cache.get("data") != hoje:
+                cache = {"data": hoje, "enviados": []}
+                
+            if self.pendencia_id not in cache["enviados"]:
+                cache["enviados"].append(self.pendencia_id)
+                
+            with open(cache_file, "w", encoding="utf-8") as f:
+                json.dump(cache, f)
+        except Exception:
+            pass
+
     def pode_enviar_hoje(self) -> bool:
         """
         Verifica se a mensagem tem uma data/hora programada.
-        Se não tiver (vazia), retorna True (pode enviar qualquer hora, segue agendamento automático).
+        Se não tiver (vazia), retorna True apenas nas janelas de agendamento automático (08, 11, 14, 17).
         Se tiver apenas data, só retorna True se for o dia exato de hoje.
         Se tiver data e hora, só retorna True se o momento atual for maior ou igual à data e hora programada.
         """
         dt_str = str(self.mensagem_programada or "").strip()
-        if not dt_str:
-            return True
-
         from datetime import datetime
+        agora = datetime.now()
+
+        if not dt_str:
+            # Automático: Só libera o envio nas janelas específicas para evitar envio de madrugada
+            hora_str = agora.strftime("%H")
+            if hora_str in ["08", "11", "14", "17"]:
+                return True
+            return False
+
         try:
             # Tentar formatos com Hora e Minuto
             for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"):
                 try:
                     dt_prog = datetime.strptime(dt_str, fmt)
                     # Tem hora! Só envia se passou do momento exato programado
-                    return datetime.now() >= dt_prog
+                    return agora >= dt_prog
                 except ValueError:
                     continue
             
@@ -118,14 +168,13 @@ class Pendencia:
                 try:
                     dt_prog = datetime.strptime(dt_str, fmt).date()
                     # Não tem hora, só data. Envia em qualquer momento daquele dia (desde as 00:00).
-                    return dt_prog == datetime.now().date()
+                    return dt_prog == agora.date()
                 except ValueError:
                     continue
-
         except Exception:
             pass
 
-        return True # Se houver erro de formatação absurdo, melhor tentar enviar do que ignorar para sempre
+        return False # Se não der match em nada e tiver texto inválido, não envia
 
     def formatar_telefone_valido(self) -> str:
         from src.utils.formatters import formatar_telefone

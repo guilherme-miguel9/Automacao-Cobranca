@@ -68,10 +68,18 @@ class OpenClawOrchestrator:
                     total_falha += 1
                     continue
 
+                # Verificar se já foi enviada hoje
+                if pendencia.ja_enviado_hoje():
+                    logger.info(f"Ignorando pendencia {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Já enviada hoje.")
+                    pendencia.detalhes_envio = "Ignorado: Já enviado hoje"
+                    sucessos_rota += 1
+                    total_sucesso += 1
+                    continue
+
                 # Verificar se existe uma data programada e se hoje é o dia correto
                 if not pendencia.pode_enviar_hoje():
-                    logger.info(f"Ignorando pendencia {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Programado para {pendencia.mensagem_programada} (hoje e outra data).")
-                    pendencia.detalhes_envio = f"Ignorado: Programado para {pendencia.mensagem_programada}"
+                    logger.info(f"Ignorando pendencia {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Fora do horario programado ou janela automatica.")
+                    pendencia.detalhes_envio = f"Ignorado: Fora do horario/janela"
                     # Para não contabilizar como falha dura no report, você pode tratar como sucesso pulado ou falha.
                     # Mas como ele não enviou ainda e não deve, vamos registrar como sucesso na leitura mas sem envio (ou falha técnica).
                     # A melhor forma é registrar nos detalhes e continuar, mas mantendo a lógica de falhas_rota para ele tentar amanhã de novo.
@@ -86,6 +94,7 @@ class OpenClawOrchestrator:
 
                 sucesso = self.whatsapp_service.enviar_cobranca(pendencia)
                 if sucesso:
+                    pendencia.registrar_envio()
                     sucessos_rota += 1
                     total_sucesso += 1
                     valor_sucesso_rota += pendencia.valor

@@ -62,7 +62,7 @@ class ExecutionView(QWidget):
         self.btn_run.setObjectName("primaryButton")
         self.btn_run.clicked.connect(self.start_single_run)
 
-        self.btn_schedule = QPushButton("Iniciar Agendamento Automatico (08h, 11h, 14h, 17h)")
+        self.btn_schedule = QPushButton("Iniciar Agendamento Automatico (Verifica a cada minuto)")
         self.btn_schedule.setObjectName("secondaryButton")
         self.btn_schedule.clicked.connect(self.start_loop_run)
 
@@ -117,7 +117,7 @@ class ExecutionView(QWidget):
         self.btn_run.setEnabled(False)
         self.btn_schedule.setEnabled(False)
         self.btn_stop.setEnabled(True)
-        self.append_log("[INFO] Modo Agendado Ativado (Janelas: 08h, 11h, 14h, 17h)...")
+        self.append_log("[INFO] Modo Agendado Ativado (Verificacao a cada minuto)...")
 
         self.worker = BotWorkerThread(mode="loop")
         self.worker.finished_signal.connect(self.on_worker_finished)

@@ -41,32 +41,19 @@ def executar_ciclo():
 
 def modo_agendado():
     """
-    Executa o robô continuamente nas janelas das 08h, 11h, 14h e 17h com variação aleatória de horário (antispam).
+    Executa o robô continuamente. 
+    A inteligência de janelas (automáticas) e horários exatos (programados) está no modelo Pendencia.
+    Verifica a cada 1 minuto (60 segundos).
     """
-    logger.info("⏰ MODO AGENDADO ATIVO: O robô rodará nas janelas de 08h, 11h, 14h e 17h com variação antispam.")
-    janelas_disparo = ["08", "11", "14", "17"]
-    janelas_executadas_hoje = set()
-    dia_atual = datetime.now().day
+    logger.info("⏰ MODO AGENDADO ATIVO: O robô ficará verificando a planilha a cada 1 minuto.")
 
     while True:
-        agora = datetime.now()
-
-        # Resetar janelas executadas no novo dia
-        if agora.day != dia_atual:
-            dia_atual = agora.day
-            janelas_executadas_hoje.clear()
-
-        hora_str = agora.strftime("%H")
-
-        if hora_str in janelas_disparo and hora_str not in janelas_executadas_hoje:
-            # Jitter aleatório de 1 a 15 minutos para simular comportamento humano
-            jitter_minutos = random.randint(1, 15)
-            logger.info(f"🎯 Janela das {hora_str}h identificada. Aplicando variação antispam de {jitter_minutos} minutos antes de iniciar...")
-            time.sleep(jitter_minutos * 60)
-
+        try:
             executar_ciclo()
-            janelas_executadas_hoje.add(hora_str)
-
+        except Exception as e:
+            logger.error(f"Erro no ciclo de verificação: {e}")
+        
+        # Pausa 1 minuto entre checagens
         time.sleep(60)
 
 def main():
