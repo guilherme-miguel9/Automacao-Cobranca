@@ -78,7 +78,7 @@ class GoogleSheetsConnector:
             records = sheet.get_all_records()
 
             pendencias = []
-            for row in records:
+            for idx, row in enumerate(records, start=2):
                 row_norm = {str(k).strip().lower().replace(" ", "_"): v for k, v in row.items()}
                 
                 try:
@@ -95,11 +95,12 @@ class GoogleSheetsConnector:
                         hora_limite=str(row_norm.get("hora_limite", row_norm.get("hora_máxima", row_norm.get("hora_maxima", row_norm.get("hora", row_norm.get("horário", row_norm.get("horario", ""))))))).strip(),
                         codigo_barras=str(row_norm.get("codigo_barras", row_norm.get("pix", ""))) if row_norm.get("codigo_barras", row_norm.get("pix", "")) else "",
                         status=str(row_norm.get("status", row_norm.get("ok", row_norm.get("confirmado", row_norm.get("resposta", row_norm.get("situação", row_norm.get("situacao", "PENDENTE"))))))).strip(),
-                        mensagem_programada=str(row_norm.get("mensagem_programada", row_norm.get("agendamento", ""))).strip()
+                        mensagem_programada=str(row_norm.get("mensagem_programada", row_norm.get("agendamento", ""))).strip(),
+                        linha_planilha=idx
                     )
                     pendencias.append(p)
                 except Exception as ex:
-                    logger.warning(f"Ignorando linha inválida no Google Sheets: {ex}")
+                    logger.warning(f"Ignorando linha {idx} inválida no Google Sheets: {ex}")
 
             logger.info(f"✅ {len(pendencias)} pendências lidas com sucesso do Google Sheets.")
             return pendencias

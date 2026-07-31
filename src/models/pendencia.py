@@ -17,6 +17,7 @@ class Pendencia:
     status: str = "PENDENTE"            # Status: PENDENTE, ENVIADO, FALHA
     detalhes_envio: Optional[str] = ""   # Log de envio
     mensagem_programada: Optional[str] = "" # Data para disparo programado (opcional)
+    linha_planilha: int = 0             # Índice da linha na planilha (para diferenciar duplicatas)
 
     @property
     def foto_url_direta(self) -> str:
@@ -94,6 +95,11 @@ class Pendencia:
             pass
 
         return False
+        
+    def _obter_chave_cache(self) -> str:
+        if self.linha_planilha > 0:
+            return f"{self.pendencia_id}_L{self.linha_planilha}"
+        return self.pendencia_id
 
     def ja_enviado_hoje(self) -> bool:
         from datetime import datetime
@@ -110,7 +116,7 @@ class Pendencia:
                 cache = {}
             if cache.get("data") != hoje:
                 return False
-            return self.pendencia_id in cache.get("enviados", [])
+            return self._obter_chave_cache() in cache.get("enviados", [])
         except Exception:
             return False
 
@@ -121,6 +127,7 @@ class Pendencia:
         
         hoje = datetime.now().strftime("%Y-%m-%d")
         cache_file = settings.APP_DIR / "config" / "envios_cache.json"
+        chave = self._obter_chave_cache()
         try:
             if cache_file.exists():
                 with open(cache_file, "r", encoding="utf-8") as f:
@@ -131,8 +138,8 @@ class Pendencia:
             if cache.get("data") != hoje:
                 cache = {"data": hoje, "enviados": []}
                 
-            if self.pendencia_id not in cache["enviados"]:
-                cache["enviados"].append(self.pendencia_id)
+            if chave not in cache["enviados"]:
+                cache["enviados"].append(chave)
                 
             with open(cache_file, "w", encoding="utf-8") as f:
                 json.dump(cache, f)
