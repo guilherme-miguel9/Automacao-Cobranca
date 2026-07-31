@@ -168,9 +168,12 @@ class Pendencia:
             # 1. Tentar formatos Apenas com Hora (ex: 14:30 ou 14:30:00)
             for fmt in ("%H:%M", "%H:%M:%S"):
                 try:
-                    dt_prog = datetime.strptime(dt_str, fmt)
-                    # Assumimos que é para o dia de hoje
-                    return agora.time() >= dt_prog.time()
+                    dt_parsed = datetime.strptime(dt_str, fmt)
+                    dt_prog = datetime.combine(agora.date(), dt_parsed.time())
+                    # Só envia se passou do horário, e no máximo até 1 hora (3600 segundos) depois
+                    if agora >= dt_prog and (agora - dt_prog).total_seconds() <= 3600:
+                        return True
+                    return False
                 except ValueError:
                     continue
 
@@ -178,8 +181,12 @@ class Pendencia:
             for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"):
                 try:
                     dt_prog = datetime.strptime(dt_str, fmt)
-                    # Tem hora! Só envia se passou do momento exato programado
-                    return agora >= dt_prog
+                    # Só envia se a data for EXATAMENTE a data de hoje
+                    if dt_prog.date() == agora.date():
+                        # Tem hora! Só envia se passou do momento, no limite de 1 hora (3600 segundos)
+                        if agora >= dt_prog and (agora - dt_prog).total_seconds() <= 3600:
+                            return True
+                    return False
                 except ValueError:
                     continue
             
@@ -187,7 +194,7 @@ class Pendencia:
             for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
                 try:
                     dt_prog = datetime.strptime(dt_str, fmt).date()
-                    # Não tem hora, só data. Envia em qualquer momento daquele dia (desde as 00:00).
+                    # Não tem hora, só data. Envia em qualquer momento do dia de hoje
                     return dt_prog == agora.date()
                 except ValueError:
                     continue
