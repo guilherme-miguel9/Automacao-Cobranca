@@ -126,6 +126,22 @@ docker run --rm \
 
 ---
 
+## Geração do Executável (.EXE)
+
+Para compilar a aplicação em um único arquivo executável standalone (`CobobraBot.exe`) contendo a interface PySide6 e o Gateway do WhatsApp:
+
+```bash
+# Executar o script utilitário de compilação (detecta automaticamente o .venv):
+python build_exe.py
+
+# Ou compilar diretamente via PyInstaller utilizando o interpretador do .venv:
+.\.venv\Scripts\python.exe -m PyInstaller CobobraBot.spec --clean --noconfirm
+```
+
+O executável final estará disponível no diretório `dist/CobobraBot.exe`.
+
+---
+
 ## Licença
 
 Projeto de desenvolvimento proprietário e de uso restrito.
