@@ -70,14 +70,13 @@ def formatar_mensagem_pendencia(nome_solicitante: str, pendencia_id: str, descri
         msg += f"• *Prazo Máximo:* {data_exibicao}\n"
         if hora_limite:
             msg += f"• *Hora Limite:* {hora_limite}\n"
-    
-    if valor and valor > 0:
-        msg += f"• *Valor:* {formatar_moeda(valor)}\n"
-
-    if codigo_barras:
-        msg += f"\n*Código de Barras / Chave PIX:*\n`{codigo_barras}`\n"
         
-    if not is_agendado_sem_data:
+        if valor and valor > 0:
+            msg += f"• *Valor:* {formatar_moeda(valor)}\n"
+
+        if codigo_barras:
+            msg += f"\n*Código de Barras / Chave PIX:*\n`{codigo_barras}`\n"
+            
         msg += "\nFavor verificar o andamento ou responder a esta mensagem em caso de dúvidas.\n"
 
     msg += "\nAtenciosamente,\n*Equipe do Núcleo de Qualidade*"

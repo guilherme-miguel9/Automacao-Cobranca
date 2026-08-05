@@ -68,10 +68,10 @@ class OpenClawOrchestrator:
                     total_falha += 1
                     continue
 
-                # Verificar se já foi enviada hoje
+                # Verificar se já foi enviada hoje (ou nesta janela de horário para data_máxima)
                 if pendencia.ja_enviado_hoje():
-                    logger.info(f"Ignorando pendencia {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Já enviada hoje.")
-                    pendencia.detalhes_envio = "Ignorado: Já enviado hoje"
+                    logger.info(f"Ignorando pendencia {pendencia.pendencia_id} ({pendencia.nome_solicitante}): Já enviada nesta janela de horário ou hoje.")
+                    pendencia.detalhes_envio = "Ignorado: Já enviado nesta janela/hoje"
                     sucessos_rota += 1
                     total_sucesso += 1
                     continue

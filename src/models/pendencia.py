@@ -98,8 +98,20 @@ class Pendencia:
         
     def _obter_chave_cache(self) -> str:
         if self.linha_planilha > 0:
-            return f"{self.pendencia_id}_L{self.linha_planilha}"
-        return self.pendencia_id
+            chave_base = f"{self.pendencia_id}_L{self.linha_planilha}"
+        else:
+            chave_base = self.pendencia_id
+
+        # Se NÃO possui mensagem_programada, a cobrança é guiada por data_máxima (envio nas janelas de 08h, 11h, 14h, 17h).
+        # Adicionamos a hora atual à chave de cache para permitir 4 disparos por dia (um em cada janela).
+        # Caso possua mensagem_programada, mantém a chave sem sufixo de hora para garantir exatamente 1 disparo por dia.
+        dt_prog = str(self.mensagem_programada or "").strip()
+        if not dt_prog:
+            from datetime import datetime
+            hora_str = datetime.now().strftime("%H")
+            return f"{chave_base}_H{hora_str}"
+
+        return chave_base
 
     def ja_enviado_hoje(self) -> bool:
         from datetime import datetime

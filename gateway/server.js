@@ -21,16 +21,22 @@ if (!fs.existsSync(sessionPath)) {
     fs.mkdirSync(sessionPath, { recursive: true });
 }
 
+const pino = require('pino');
+
 async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 
+    // Logger silencioso para esconder os logs JSON internos do Baileys
+    const silentLogger = pino({ level: 'silent' });
+
     sock = makeWASocket({
         auth: state,
+        logger: silentLogger,
         printQRInTerminal: false,
         syncFullHistory: false, // Prevents Request Time-out on init queries
         markOnlineOnConnect: false, // Reduces initial connection overhead
-        connectTimeoutMs: 60000, // 60s timeout instead of 20s
-        defaultQueryTimeoutMs: 60000,
+        connectTimeoutMs: 120000, // Aumentado para 120s
+        defaultQueryTimeoutMs: 120000,
         keepAliveIntervalMs: 10000,
         generateHighQualityLinkPreview: false
     });
