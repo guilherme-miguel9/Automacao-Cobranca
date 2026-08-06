@@ -86,7 +86,14 @@ class GoogleSheetsConnector:
                         pendencia_id=str(row_norm.get("pendencia", row_norm.get("uc", row_norm.get("contrato", "PEND-001")))).strip(),
                         nome_solicitante=str(row_norm.get("nome_solicitante", row_norm.get("solicitante", row_norm.get("cliente_nome", "Solicitante")))).strip(),
                         descricao=str(row_norm.get("descrição", row_norm.get("descricao", row_norm.get("detalhes", "Sem descrição")))).strip(),
-                        data_maxima=str(row_norm.get("data_máxima", row_norm.get("data_maxima", row_norm.get("vencimento", "")))).strip(),
+                        data_maxima=str(
+                            row_norm.get("data_máxima") or
+                            row_norm.get("data_maxima") or
+                            row_norm.get("vencimento") or
+                            row_norm.get("prazo") or
+                            row_norm.get("prazo_maximo") or
+                            ""
+                        ).strip(),
                         telefone=str(row_norm.get("telefone", row_norm.get("celular", row_norm.get("whatsapp", "")))).strip(),
                         foto_url=str(row_norm.get("anexo", row_norm.get("anexo_url", row_norm.get("foto", row_norm.get("foto_url", row_norm.get("imagem", "")))))).strip(),
                         email=str(row_norm.get("email", "")) if row_norm.get("email") else None,
@@ -95,7 +102,19 @@ class GoogleSheetsConnector:
                         hora_limite=str(row_norm.get("hora_limite", row_norm.get("hora_máxima", row_norm.get("hora_maxima", row_norm.get("hora", row_norm.get("horário", row_norm.get("horario", ""))))))).strip(),
                         codigo_barras=str(row_norm.get("codigo_barras", row_norm.get("pix", ""))) if row_norm.get("codigo_barras", row_norm.get("pix", "")) else "",
                         status=str(row_norm.get("status", row_norm.get("ok", row_norm.get("confirmado", row_norm.get("resposta", row_norm.get("situação", row_norm.get("situacao", "PENDENTE"))))))).strip(),
-                        mensagem_programada=str(row_norm.get("mensagem_programada", row_norm.get("agendamento", ""))).strip(),
+                        mensagem_programada=str(
+                            row_norm.get("mensagem_programada") or
+                            row_norm.get("hora_programada") or
+                            row_norm.get("horario_programado") or
+                            row_norm.get("horário_programado") or
+                            row_norm.get("agendamento") or
+                            row_norm.get("agendado") or
+                            row_norm.get("data_programada") or
+                            row_norm.get("data_agendada") or
+                            row_norm.get("disparo") or
+                            row_norm.get("hora_agendada") or
+                            ""
+                        ).strip(),
                         linha_planilha=idx
                     )
                     pendencias.append(p)

@@ -72,17 +72,28 @@ class Pendencia:
 
         try:
             from datetime import datetime
+            import re
+
             dt_str = str(self.data_maxima).strip()
-            
-            # Se hora_limite existir e não estiver na data_maxima, concatenar
-            if self.hora_limite and ":" in str(self.hora_limite) and len(dt_str) <= 10:
-                dt_str = f"{dt_str} {str(self.hora_limite).strip()}"
+            clean_dt = dt_str.lower().replace("às", "").replace("as", "").strip()
+            clean_dt = re.sub(r'(\d{1,2})\s*h\s*(\d{2})', r'\1:\2', clean_dt)
+            clean_dt = re.sub(r'(\d{1,2})\s*h\b', r'\1:00', clean_dt)
+
+            # Se hora_limite existir e não estiver em data_maxima, concatenar
+            if self.hora_limite and ":" in str(self.hora_limite) and len(clean_dt) <= 10:
+                clean_dt = f"{clean_dt} {str(self.hora_limite).strip()}"
 
             dt_max = None
-            for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S", "%d/%m/%Y", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+            for fmt in (
+                "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
+                "%d/%m/%y %H:%M", "%d/%m/%y %H:%M:%S",
+                "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S",
+                "%d/%m/%Y", "%d/%m/%y", "%Y-%m-%d"
+            ):
                 try:
-                    dt = datetime.strptime(dt_str, fmt)
-                    if fmt in ("%d/%m/%Y", "%Y-%m-%d") and not self.hora_limite:
+                    dt = datetime.strptime(clean_dt, fmt)
+                    # Se for apenas data sem horário especifico, vai até o fim do dia de vencimento (23:59:59)
+                    if fmt in ("%d/%m/%Y", "%d/%m/%y", "%Y-%m-%d") and not self.hora_limite:
                         dt = dt.replace(hour=23, minute=59, second=59)
                     dt_max = dt
                     break
@@ -95,16 +106,27 @@ class Pendencia:
             pass
 
         return False
-        
+
+    def obter_hora_limite_data_maxima(self) -> str:
+        """
+        Extrai a hora (00-23) de data_maxima ou hora_limite se houver horário específico.
+        """
+        import re
+        texto = f"{self.data_maxima or ''} {self.hora_limite or ''}".lower().replace("às", "").replace("as", "").strip()
+        match = re.search(r'(\d{1,2})\s*:\s*\d{2}', texto)
+        if not match:
+            match = re.search(r'(\d{1,2})\s*h', texto)
+        if match:
+            h = int(match.group(1))
+            return f"{h:02d}"
+        return ""
+
     def _obter_chave_cache(self) -> str:
         if self.linha_planilha > 0:
             chave_base = f"{self.pendencia_id}_L{self.linha_planilha}"
         else:
             chave_base = self.pendencia_id
 
-        # Se NÃO possui mensagem_programada, a cobrança é guiada por data_máxima (envio nas janelas de 08h, 11h, 14h, 17h).
-        # Adicionamos a hora atual à chave de cache para permitir 4 disparos por dia (um em cada janela).
-        # Caso possua mensagem_programada, mantém a chave sem sufixo de hora para garantir exatamente 1 disparo por dia.
         dt_prog = str(self.mensagem_programada or "").strip()
         if not dt_prog:
             from datetime import datetime
@@ -160,54 +182,69 @@ class Pendencia:
 
     def pode_enviar_hoje(self) -> bool:
         """
-        Verifica se a mensagem tem uma data/hora programada.
-        Se não tiver (vazia), retorna True apenas nas janelas de agendamento automático (08, 11, 14, 17).
-        Se tiver apenas data, só retorna True se for o dia exato de hoje.
-        Se tiver data e hora, só retorna True se o momento atual for maior ou igual à data e hora programada.
+        Verifica se a mensagem pode ser enviada no momento atual:
+        1. Se mensagem_programada estiver vazia (guiado por data_máxima):
+           - Envia nas 4 janelas padrão (08, 11, 14, 17).
+           - Se tiver hora limite específica (ex: 10h em 09/10/2026), envia também às 10h.
+        2. Se mensagem_programada estiver preenchida:
+           - Envia a partir da data/hora exata programada.
         """
         dt_str = str(self.mensagem_programada or "").strip()
         from datetime import datetime
         agora = datetime.now()
 
         if not dt_str:
-            # Automático: Só libera o envio nas janelas específicas para evitar envio de madrugada
+            # Automático (data_máxima): Janelas padrão (08, 11, 14, 17)
             hora_str = agora.strftime("%H")
-            if hora_str in ["08", "11", "14", "17"]:
+            janelas_padrao = ["08", "11", "14", "17"]
+            if hora_str in janelas_padrao:
                 return True
+
+            # Se houver hora limite personalizada em data_máxima (ex: 10h)
+            hora_especifica = self.obter_hora_limite_data_maxima()
+            if hora_especifica and hora_str == hora_especifica:
+                return True
+
             return False
 
+        import re
+        clean_str = dt_str.lower().strip()
+
+        # Normalizar "11h30" -> "11:30" e "11h" -> "11:00"
+        clean_str = re.sub(r'(\d{1,2})\s*h\s*(\d{2})', r'\1:\2', clean_str)
+        clean_str = re.sub(r'(\d{1,2})\s*h\b', r'\1:00', clean_str)
+
         try:
-            # 1. Tentar formatos Apenas com Hora (ex: 14:30 ou 14:30:00)
+            # 1. Formatos Apenas com Hora (ex: 11:00, 11:00:00)
             for fmt in ("%H:%M", "%H:%M:%S"):
                 try:
-                    dt_parsed = datetime.strptime(dt_str, fmt)
+                    dt_parsed = datetime.strptime(clean_str, fmt)
                     dt_prog = datetime.combine(agora.date(), dt_parsed.time())
-                    # Só envia se passou do horário, e no máximo até 1 hora (3600 segundos) depois
-                    if agora >= dt_prog and (agora - dt_prog).total_seconds() <= 3600:
+                    if agora >= dt_prog:
                         return True
                     return False
                 except ValueError:
                     continue
 
-            # 2. Tentar formatos com Data e Hora
-            for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"):
+            # 2. Formatos com Data e Hora (ex: 09/10/2026 10:00, 09/10/26 10:00)
+            for fmt in (
+                "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S",
+                "%d/%m/%y %H:%M", "%d/%m/%y %H:%M:%S",
+                "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"
+            ):
                 try:
-                    dt_prog = datetime.strptime(dt_str, fmt)
-                    # Só envia se a data for EXATAMENTE a data de hoje
-                    if dt_prog.date() == agora.date():
-                        # Tem hora! Só envia se passou do momento, no limite de 1 hora (3600 segundos)
-                        if agora >= dt_prog and (agora - dt_prog).total_seconds() <= 3600:
-                            return True
+                    dt_prog = datetime.strptime(clean_str, fmt)
+                    if agora >= dt_prog:
+                        return True
                     return False
                 except ValueError:
                     continue
-            
-            # 3. Tentar formatos somente com Data
-            for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+
+            # 3. Formatos apenas com Data (ex: 09/10/2026, 09/10/26)
+            for fmt in ("%d/%m/%Y", "%d/%m/%y", "%Y-%m-%d"):
                 try:
-                    dt_prog = datetime.strptime(dt_str, fmt).date()
-                    # Não tem hora, só data. Envia em qualquer momento do dia de hoje
-                    return dt_prog == agora.date()
+                    dt_prog = datetime.strptime(clean_str, fmt).date()
+                    return dt_prog <= agora.date()
                 except ValueError:
                     continue
         except Exception:
